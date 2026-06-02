@@ -1,0 +1,25 @@
+server:
+  port: 4821
+  log_level: info
+
+providers:
+  openai:
+    api_key: "your-openai-api-key"
+  anthropic:
+    api_key: "your-anthropic-api-key"
+  gemini:
+    api_key: "your-gemini-api-key"
+  groq:
+    api_key: "your-groq-api-key"
+
+models:
+  - alias: coding
+    fallback_mode: smart
+    providers:
+      - openai
+      - anthropic
+  - alias: fast
+    fallback_mode: fast
+    providers:
+      - groq
+      - openai

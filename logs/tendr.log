@@ -1,0 +1,4 @@
+{"level":"info","addr":":4821","time":1780425259,"message":"starting gateway server"}
+{"level":"error","error":"provider error: status code 401","time":1780425262,"message":"provider completion failed"}
+{"level":"info","time":1780425262,"message":"stopping gateway server"}
+{"level":"fatal","error":"http: Server closed","time":1780425262,"message":"gateway server failed"}
