@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/RizkiRdm/TNDR/internal/provider"
+	"github.com/RizkiRdm/TNDR/internal/router"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/log"
@@ -15,23 +16,23 @@ import (
 type Server struct {
 	httpServer *http.Server
 	router     *chi.Mux
-	provider   provider.Provider
+	gwRouter   *router.Router
 }
 
-func NewServer(port int, p provider.Provider) *Server {
-	r := chi.NewRouter()
+func NewServer(port int, r *router.Router) *Server {
+	mux := chi.NewRouter()
 
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	mux.Use(middleware.RequestID)
+	mux.Use(middleware.RealIP)
+	mux.Use(middleware.Logger)
+	mux.Use(middleware.Recoverer)
 
 	s := &Server{
-		router:   r,
-		provider: p,
+		router:   mux,
+		gwRouter: r,
 		httpServer: &http.Server{
 			Addr:    fmt.Sprintf(":%d", port),
-			Handler: r,
+			Handler: mux,
 		},
 	}
 
@@ -53,15 +54,63 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := s.provider.Complete(r.Context(), &req)
+	if req.Stream {
+		s.handleStreaming(w, r, &req)
+		return
+	}
+
+	// In TENDR, we use the 'model' field as the alias
+	resp, err := s.gwRouter.Complete(r.Context(), req.Model, &req)
 	if err != nil {
-		log.Error().Err(err).Msg("provider completion failed")
-		http.Error(w, "provider failure", http.StatusBadGateway)
+		log.Error().Err(err).Str("model", req.Model).Msg("routing failed")
+		http.Error(w, fmt.Sprintf("gateway error: %v", err), http.StatusBadGateway)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (s *Server) handleStreaming(w http.ResponseWriter, r *http.Request, req *provider.CompletionRequest) {
+	respChan, errChan := s.gwRouter.Stream(r.Context(), req.Model, req)
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		case err, ok := <-errChan:
+			if ok && err != nil {
+				log.Error().Err(err).Msg("stream error")
+				fmt.Fprintf(w, "event: error\ndata: %v\n\n", err)
+				flusher.Flush()
+			}
+			return
+		case resp, ok := <-respChan:
+			if !ok {
+				fmt.Fprintf(w, "data: [DONE]\n\n")
+				flusher.Flush()
+				return
+			}
+			jsonData, err := json.Marshal(resp)
+			if err != nil {
+				log.Error().Err(err).Msg("marshal stream resp failed")
+				continue
+			}
+			fmt.Fprintf(w, "data: %s\n\n", jsonData)
+			flusher.Flush()
+		}
+	}
 }
 
 func (s *Server) Start() error {

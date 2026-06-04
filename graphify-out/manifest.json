@@ -1,0 +1,117 @@
+{
+  "/home/rizki/projects/backend-projects/buruh/skills-lock.json": {
+    "mtime": 1780419014.75319,
+    "ast_hash": "a579478105375049f46a887c07e089db",
+    "semantic_hash": "a579478105375049f46a887c07e089db"
+  },
+  "/home/rizki/projects/backend-projects/buruh/internal/provider/provider.go": {
+    "mtime": 1780424947.034113,
+    "ast_hash": "4b5d31cb3157c8e4296e10f72b363dd3",
+    "semantic_hash": "4b5d31cb3157c8e4296e10f72b363dd3"
+  },
+  "/home/rizki/projects/backend-projects/buruh/internal/provider/openai/openai.go": {
+    "mtime": 1780424980.0908144,
+    "ast_hash": "5441445bedf5a0f3e3ac3b1e25a8f89c",
+    "semantic_hash": "5441445bedf5a0f3e3ac3b1e25a8f89c"
+  },
+  "/home/rizki/projects/backend-projects/buruh/internal/config/config.go": {
+    "mtime": 1780425094.0012062,
+    "ast_hash": "08110cdf0d0fd04b0ea97c7f23a3bbc9",
+    "semantic_hash": "08110cdf0d0fd04b0ea97c7f23a3bbc9"
+  },
+  "/home/rizki/projects/backend-projects/buruh/internal/gateway/gateway.go": {
+    "mtime": 1780424998.0751946,
+    "ast_hash": "4e63344238259504dc6d557182307b80",
+    "semantic_hash": "4e63344238259504dc6d557182307b80"
+  },
+  "/home/rizki/projects/backend-projects/buruh/internal/logger/logger.go": {
+    "mtime": 1780424642.6954463,
+    "ast_hash": "1f4cba59b1a2d26a7ce04d3a84ad50d2",
+    "semantic_hash": "1f4cba59b1a2d26a7ce04d3a84ad50d2"
+  },
+  "/home/rizki/projects/backend-projects/buruh/.gemini/settings.json": {
+    "mtime": 1779983268.4054625,
+    "ast_hash": "9a4d10ec435d40890fc4e25416a09a39",
+    "semantic_hash": "9a4d10ec435d40890fc4e25416a09a39"
+  },
+  "/home/rizki/projects/backend-projects/buruh/cmd/tendr/main.go": {
+    "mtime": 1780425019.9836564,
+    "ast_hash": "118b12543461a3e30eeae5a034912e9b",
+    "semantic_hash": "118b12543461a3e30eeae5a034912e9b"
+  },
+  "/home/rizki/projects/backend-projects/buruh/config.example.yaml": {
+    "mtime": 1780425031.4198968,
+    "ast_hash": "8c9d15af36a5865e622839d91cfa0afe",
+    "semantic_hash": "8c9d15af36a5865e622839d91cfa0afe"
+  },
+  "/home/rizki/projects/backend-projects/buruh/config.yaml": {
+    "mtime": 1780425159.0505567,
+    "ast_hash": "e0e90597880a0738fb8eadd6d657859e",
+    "semantic_hash": "e0e90597880a0738fb8eadd6d657859e"
+  },
+  "/home/rizki/projects/backend-projects/buruh/AGENTS.md": {
+    "mtime": 1780590875.7637792,
+    "ast_hash": "cf0703cd6c207935a762407f2049c365",
+    "semantic_hash": "cf0703cd6c207935a762407f2049c365"
+  },
+  "/home/rizki/projects/backend-projects/buruh/README.md": {
+    "mtime": 1780425362.3507216,
+    "ast_hash": "aad1c3275cee41e6473173f2490185fd",
+    "semantic_hash": "aad1c3275cee41e6473173f2490185fd"
+  },
+  "/home/rizki/projects/backend-projects/buruh/GEMINI.md": {
+    "mtime": 1780591059.5067327,
+    "ast_hash": "7c209ed222dea6a68af284a136498695",
+    "semantic_hash": "7c209ed222dea6a68af284a136498695"
+  },
+  "/home/rizki/projects/backend-projects/buruh/.gemini/skills/ccc/SKILL.md": {
+    "mtime": 1779817970.3232055,
+    "ast_hash": "14065d4bbe0416430f22917b97c30364",
+    "semantic_hash": "14065d4bbe0416430f22917b97c30364"
+  },
+  "/home/rizki/projects/backend-projects/buruh/.gemini/skills/ccc/references/management.md": {
+    "mtime": 1779817970.3232055,
+    "ast_hash": "c33be6e3317518991b14ce4fb9081b60",
+    "semantic_hash": "c33be6e3317518991b14ce4fb9081b60"
+  },
+  "/home/rizki/projects/backend-projects/buruh/.gemini/skills/ccc/references/settings.md": {
+    "mtime": 1779817970.3232055,
+    "ast_hash": "b2aa4193af84037682a829beb670a64e",
+    "semantic_hash": "b2aa4193af84037682a829beb670a64e"
+  },
+  "/home/rizki/projects/backend-projects/buruh/docs/PRD.md": {
+    "mtime": 1780590739.6897478,
+    "ast_hash": "a5998235bbbf6fec66121fef2e30c46b",
+    "semantic_hash": "a5998235bbbf6fec66121fef2e30c46b"
+  },
+  "/home/rizki/projects/backend-projects/buruh/docs/ARCHITECTURE.md": {
+    "mtime": 1780590700.7127998,
+    "ast_hash": "7e10d9ca3d1968fb6c969b29cf6ffd5e",
+    "semantic_hash": "7e10d9ca3d1968fb6c969b29cf6ffd5e"
+  },
+  "/home/rizki/projects/backend-projects/buruh/docs/PLAN.md": {
+    "mtime": 1780589013.555645,
+    "ast_hash": "60bd9c99b3031fddca94f0b21ba980fa",
+    "semantic_hash": "60bd9c99b3031fddca94f0b21ba980fa"
+  },
+  "/home/rizki/projects/backend-projects/buruh/docs/PARKING_LOT.md": {
+    "mtime": 1780419176.6114647,
+    "ast_hash": "1b01dae15866be5bad35ebc4abb671e3",
+    "semantic_hash": "1b01dae15866be5bad35ebc4abb671e3"
+  },
+  "/home/rizki/projects/backend-projects/buruh/docs/DESIGN.md": {
+    "mtime": 1780419141.8909726,
+    "ast_hash": "19258adc73c536eef536a7c37a9ce8d6",
+    "semantic_hash": "19258adc73c536eef536a7c37a9ce8d6"
+  },
+  "/home/rizki/projects/backend-projects/buruh/AGENTS.original.md": {
+    "mtime": 1780591007.4818442,
+    "ast_hash": "cf0703cd6c207935a762407f2049c365",
+    "semantic_hash": "cf0703cd6c207935a762407f2049c365"
+  },
+  "/home/rizki/projects/backend-projects/buruh/GEMINI.original.md": {
+    "mtime": 1780591007.473844,
+    "ast_hash": "ef67d334a22520a9808757112cffcc09",
+    "semantic_hash": "ef67d334a22520a9808757112cffcc09"
+  }
+}

@@ -44,16 +44,16 @@ cmd/tendr/main.go
   → launches HTTP gateway (tendr start)
   → launches TUI (tendr / tendr monitor)
 
-internal/gateway    → HTTP server, request lifecycle
-internal/router     → provider selection, fallback logic
+internal/gateway    → HTTP server, request lifecycle orchestration
+internal/router     → provider selection, fallback logic, mode execution
 internal/provider/* → per-provider adapters (openai, anthropic, gemini, groq)
-internal/cache      → exact + semantic cache
-internal/cost       → cost calculation, pricing resolution
+internal/cache      → exact + semantic cache, hit/miss logic
+internal/cost       → token counting, pricing lookup, cost recording
 internal/ratelimit  → token bucket rate limiter
-internal/store      → SQLite access layer
-internal/logger     → zerolog JSONL logger
-internal/config     → YAML config parsing + validation
-internal/tui        → Bubble Tea dashboard
+internal/store      → SQLite access, migrations, query methods
+internal/logger     → zerolog JSONL logger init, entry construction
+internal/config     → YAML parsing, validation, pricing fetch
+internal/tui        → Bubble Tea dashboard models, views, update handlers
 ```
 
 Full architecture in `docs/ARCHITECTURE.md`.

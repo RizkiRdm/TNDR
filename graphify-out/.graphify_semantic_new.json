@@ -1,0 +1,182 @@
+{
+  "nodes": [
+    {
+      "id": "tendr_main",
+      "label": "TENDR CLI Entry Point",
+      "file_type": "code",
+      "source_file": "cmd/tendr/main.go"
+    },
+    {
+      "id": "config_config",
+      "label": "Configuration Loader",
+      "file_type": "code",
+      "source_file": "internal/config/config.go"
+    },
+    {
+      "id": "gateway_gateway",
+      "label": "HTTP Gateway Server",
+      "file_type": "code",
+      "source_file": "internal/gateway/gateway.go"
+    },
+    {
+      "id": "logger_logger",
+      "label": "Structured Logger",
+      "file_type": "code",
+      "source_file": "internal/logger/logger.go"
+    },
+    {
+      "id": "provider_provider",
+      "label": "AI Provider Interface",
+      "file_type": "code",
+      "source_file": "internal/provider/provider.go"
+    },
+    {
+      "id": "openai_openai",
+      "label": "OpenAI Provider Adapter",
+      "file_type": "code",
+      "source_file": "internal/provider/openai/openai.go"
+    },
+    {
+      "id": "config_yaml",
+      "label": "Default Configuration",
+      "file_type": "rationale",
+      "source_file": "config.yaml"
+    },
+    {
+      "id": "readme_md",
+      "label": "Project README",
+      "file_type": "document",
+      "source_file": "README.md"
+    },
+    {
+      "id": "agents_md",
+      "label": "AI Agent Operational Contract",
+      "file_type": "document",
+      "source_file": "AGENTS.md"
+    },
+    {
+      "id": "docs_plan",
+      "label": "Implementation Plan",
+      "file_type": "rationale",
+      "source_file": "docs/PLAN.md"
+    },
+    {
+      "id": "docs_architecture",
+      "label": "Architecture Specification",
+      "file_type": "rationale",
+      "source_file": "docs/ARCHITECTURE.md"
+    },
+    {
+      "id": "docs_prd",
+      "label": "Product Requirements Document",
+      "file_type": "rationale",
+      "source_file": "docs/PRD.md"
+    },
+    {
+      "id": "ccc_skill",
+      "label": "CCC Skill Definition",
+      "file_type": "rationale",
+      "source_file": ".gemini/skills/ccc/SKILL.md"
+    }
+  ],
+  "edges": [
+    {
+      "source": "tendr_main",
+      "target": "config_config",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "cmd/tendr/main.go"
+    },
+    {
+      "source": "tendr_main",
+      "target": "logger_logger",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "cmd/tendr/main.go"
+    },
+    {
+      "source": "tendr_main",
+      "target": "gateway_gateway",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "cmd/tendr/main.go"
+    },
+    {
+      "source": "tendr_main",
+      "target": "openai_openai",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "cmd/tendr/main.go"
+    },
+    {
+      "source": "gateway_gateway",
+      "target": "provider_provider",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "internal/gateway/gateway.go"
+    },
+    {
+      "source": "openai_openai",
+      "target": "provider_provider",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "internal/provider/openai/openai.go"
+    },
+    {
+      "source": "config_config",
+      "target": "config_yaml",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "internal/config/config.go"
+    },
+    {
+      "source": "readme_md",
+      "target": "agents_md",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "README.md"
+    },
+    {
+      "source": "docs_plan",
+      "target": "agents_md",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/PLAN.md"
+    },
+    {
+      "source": "docs_prd",
+      "target": "docs_architecture",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/PRD.md"
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "tendr_core_architecture",
+      "label": "TENDR Core Architecture",
+      "nodes": [
+        "tendr_main",
+        "gateway_gateway",
+        "provider_provider",
+        "config_config"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "AGENTS.md"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

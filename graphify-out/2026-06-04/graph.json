@@ -1,0 +1,900 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {
+    "hyperedges": [
+      {
+        "id": "tendr_core_architecture",
+        "label": "TENDR Core Architecture",
+        "nodes": [
+          "tendr_main",
+          "gateway_gateway",
+          "provider_provider",
+          "config_config"
+        ],
+        "relation": "form",
+        "confidence": "EXTRACTED",
+        "confidence_score": 1.0,
+        "source_file": "AGENTS.md"
+      }
+    ]
+  },
+  "nodes": [
+    {
+      "label": "skills-lock.json",
+      "file_type": "code",
+      "source_file": "skills-lock.json",
+      "source_location": "L1",
+      "id": "skills_lock_json",
+      "community": 8,
+      "norm_label": "skills-lock.json"
+    },
+    {
+      "label": "provider.go",
+      "file_type": "code",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L1",
+      "id": "internal_provider_provider_go",
+      "community": 4,
+      "norm_label": "provider.go"
+    },
+    {
+      "label": "Provider",
+      "file_type": "code",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L15",
+      "id": "provider_provider",
+      "community": 2,
+      "norm_label": "provider"
+    },
+    {
+      "label": "CompletionRequest",
+      "file_type": "code",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L20",
+      "id": "provider_completionrequest",
+      "community": 4,
+      "norm_label": "completionrequest"
+    },
+    {
+      "label": "Message",
+      "file_type": "code",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L26",
+      "id": "provider_message",
+      "community": 4,
+      "norm_label": "message"
+    },
+    {
+      "label": "CompletionResponse",
+      "file_type": "code",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L31",
+      "id": "provider_completionresponse",
+      "community": 4,
+      "norm_label": "completionresponse"
+    },
+    {
+      "label": "Choice",
+      "file_type": "code",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L40",
+      "id": "provider_choice",
+      "community": 4,
+      "norm_label": "choice"
+    },
+    {
+      "label": "Usage",
+      "file_type": "code",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L46",
+      "id": "provider_usage",
+      "community": 4,
+      "norm_label": "usage"
+    },
+    {
+      "label": "openai.go",
+      "file_type": "code",
+      "source_file": "internal/provider/openai/openai.go",
+      "source_location": "L1",
+      "id": "internal_provider_openai_openai_go",
+      "community": 0,
+      "norm_label": "openai.go"
+    },
+    {
+      "label": "OpenAIProvider",
+      "file_type": "code",
+      "source_file": "internal/provider/openai/openai.go",
+      "source_location": "L13",
+      "id": "openai_openaiprovider",
+      "community": 0,
+      "norm_label": "openaiprovider"
+    },
+    {
+      "label": "NewOpenAIProvider()",
+      "file_type": "code",
+      "source_file": "internal/provider/openai/openai.go",
+      "source_location": "L18",
+      "id": "openai_openai_newopenaiprovider",
+      "community": 0,
+      "norm_label": "newopenaiprovider()"
+    },
+    {
+      "label": ".Name()",
+      "file_type": "code",
+      "source_file": "internal/provider/openai/openai.go",
+      "source_location": "L25",
+      "id": "openai_openaiprovider_name",
+      "community": 0,
+      "norm_label": ".name()"
+    },
+    {
+      "label": ".Complete()",
+      "file_type": "code",
+      "source_file": "internal/provider/openai/openai.go",
+      "source_location": "L29",
+      "id": "openai_openaiprovider_complete",
+      "community": 0,
+      "norm_label": ".complete()"
+    },
+    {
+      "label": "config.go",
+      "file_type": "code",
+      "source_file": "internal/config/config.go",
+      "source_location": "L1",
+      "id": "internal_config_config_go",
+      "community": 1,
+      "norm_label": "config.go"
+    },
+    {
+      "label": "Config",
+      "file_type": "code",
+      "source_file": "internal/config/config.go",
+      "source_location": "L9",
+      "id": "config_config",
+      "community": 2,
+      "norm_label": "config"
+    },
+    {
+      "label": "ServerConfig",
+      "file_type": "code",
+      "source_file": "internal/config/config.go",
+      "source_location": "L15",
+      "id": "config_serverconfig",
+      "community": 1,
+      "norm_label": "serverconfig"
+    },
+    {
+      "label": "ProvidersConfig",
+      "file_type": "code",
+      "source_file": "internal/config/config.go",
+      "source_location": "L20",
+      "id": "config_providersconfig",
+      "community": 1,
+      "norm_label": "providersconfig"
+    },
+    {
+      "label": "ProviderSettings",
+      "file_type": "code",
+      "source_file": "internal/config/config.go",
+      "source_location": "L27",
+      "id": "config_providersettings",
+      "community": 1,
+      "norm_label": "providersettings"
+    },
+    {
+      "label": "ModelAliasConfig",
+      "file_type": "code",
+      "source_file": "internal/config/config.go",
+      "source_location": "L31",
+      "id": "config_modelaliasconfig",
+      "community": 1,
+      "norm_label": "modelaliasconfig"
+    },
+    {
+      "label": "Load()",
+      "file_type": "code",
+      "source_file": "internal/config/config.go",
+      "source_location": "L37",
+      "id": "config_config_load",
+      "community": 1,
+      "norm_label": "load()"
+    },
+    {
+      "label": "validate()",
+      "file_type": "code",
+      "source_file": "internal/config/config.go",
+      "source_location": "L68",
+      "id": "config_config_validate",
+      "community": 1,
+      "norm_label": "validate()"
+    },
+    {
+      "label": "gateway.go",
+      "file_type": "code",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L1",
+      "id": "internal_gateway_gateway_go",
+      "community": 3,
+      "norm_label": "gateway.go"
+    },
+    {
+      "label": "Server",
+      "file_type": "code",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L15",
+      "id": "gateway_server",
+      "community": 3,
+      "norm_label": "server"
+    },
+    {
+      "label": "NewServer()",
+      "file_type": "code",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L21",
+      "id": "gateway_gateway_newserver",
+      "community": 3,
+      "norm_label": "newserver()"
+    },
+    {
+      "label": ".setupRoutes()",
+      "file_type": "code",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L43",
+      "id": "gateway_server_setuproutes",
+      "community": 3,
+      "norm_label": ".setuproutes()"
+    },
+    {
+      "label": ".handleChatCompletions()",
+      "file_type": "code",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L49",
+      "id": "gateway_server_handlechatcompletions",
+      "community": 3,
+      "norm_label": ".handlechatcompletions()"
+    },
+    {
+      "label": ".Start()",
+      "file_type": "code",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L67",
+      "id": "gateway_server_start",
+      "community": 3,
+      "norm_label": ".start()"
+    },
+    {
+      "label": ".Stop()",
+      "file_type": "code",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L72",
+      "id": "gateway_server_stop",
+      "community": 3,
+      "norm_label": ".stop()"
+    },
+    {
+      "label": "logger.go",
+      "file_type": "code",
+      "source_file": "internal/logger/logger.go",
+      "source_location": "L1",
+      "id": "internal_logger_logger_go",
+      "community": 0,
+      "norm_label": "logger.go"
+    },
+    {
+      "label": "Init()",
+      "file_type": "code",
+      "source_file": "internal/logger/logger.go",
+      "source_location": "L14",
+      "id": "logger_logger_init",
+      "community": 0,
+      "norm_label": "init()"
+    },
+    {
+      "label": "settings.json",
+      "file_type": "code",
+      "source_file": ".gemini/settings.json",
+      "source_location": "L1",
+      "id": "gemini_settings_json",
+      "community": 6,
+      "norm_label": "settings.json"
+    },
+    {
+      "label": "hooks",
+      "file_type": "code",
+      "source_file": ".gemini/settings.json",
+      "source_location": "L2",
+      "id": "gemini_settings_hooks",
+      "community": 6,
+      "norm_label": "hooks"
+    },
+    {
+      "label": "BeforeTool",
+      "file_type": "code",
+      "source_file": ".gemini/settings.json",
+      "source_location": "L3",
+      "id": "gemini_settings_hooks_beforetool",
+      "community": 6,
+      "norm_label": "beforetool"
+    },
+    {
+      "label": "main.go",
+      "file_type": "code",
+      "source_file": "cmd/tendr/main.go",
+      "source_location": "L1",
+      "id": "cmd_tendr_main_go",
+      "community": 0,
+      "norm_label": "main.go"
+    },
+    {
+      "label": "main()",
+      "file_type": "code",
+      "source_file": "cmd/tendr/main.go",
+      "source_location": "L23",
+      "id": "tendr_main_main",
+      "community": 0,
+      "norm_label": "main()"
+    },
+    {
+      "label": "runStart()",
+      "file_type": "code",
+      "source_file": "cmd/tendr/main.go",
+      "source_location": "L51",
+      "id": "tendr_main_runstart",
+      "community": 0,
+      "norm_label": "runstart()"
+    },
+    {
+      "label": "runInit()",
+      "file_type": "code",
+      "source_file": "cmd/tendr/main.go",
+      "source_location": "L83",
+      "id": "tendr_main_runinit",
+      "community": 0,
+      "norm_label": "runinit()"
+    },
+    {
+      "label": "TENDR CLI Entry Point",
+      "file_type": "code",
+      "source_file": "cmd/tendr/main.go",
+      "id": "tendr_main",
+      "community": 2,
+      "norm_label": "tendr cli entry point"
+    },
+    {
+      "label": "HTTP Gateway Server",
+      "file_type": "code",
+      "source_file": "internal/gateway/gateway.go",
+      "id": "gateway_gateway",
+      "community": 2,
+      "norm_label": "http gateway server"
+    },
+    {
+      "label": "Structured Logger",
+      "file_type": "code",
+      "source_file": "internal/logger/logger.go",
+      "id": "logger_logger",
+      "community": 2,
+      "norm_label": "structured logger"
+    },
+    {
+      "label": "OpenAI Provider Adapter",
+      "file_type": "code",
+      "source_file": "internal/provider/openai/openai.go",
+      "id": "openai_openai",
+      "community": 2,
+      "norm_label": "openai provider adapter"
+    },
+    {
+      "label": "Default Configuration",
+      "file_type": "rationale",
+      "source_file": "config.yaml",
+      "id": "config_yaml",
+      "community": 2,
+      "norm_label": "default configuration"
+    },
+    {
+      "label": "Project README",
+      "file_type": "document",
+      "source_file": "README.md",
+      "id": "readme_md",
+      "community": 5,
+      "norm_label": "project readme"
+    },
+    {
+      "label": "AI Agent Operational Contract",
+      "file_type": "document",
+      "source_file": "AGENTS.md",
+      "id": "agents_md",
+      "community": 5,
+      "norm_label": "ai agent operational contract"
+    },
+    {
+      "label": "Implementation Plan",
+      "file_type": "rationale",
+      "source_file": "docs/PLAN.md",
+      "id": "docs_plan",
+      "community": 5,
+      "norm_label": "implementation plan"
+    },
+    {
+      "label": "Architecture Specification",
+      "file_type": "rationale",
+      "source_file": "docs/ARCHITECTURE.md",
+      "id": "docs_architecture",
+      "community": 7,
+      "norm_label": "architecture specification"
+    },
+    {
+      "label": "Product Requirements Document",
+      "file_type": "rationale",
+      "source_file": "docs/PRD.md",
+      "id": "docs_prd",
+      "community": 7,
+      "norm_label": "product requirements document"
+    },
+    {
+      "label": "CCC Skill Definition",
+      "file_type": "rationale",
+      "source_file": ".gemini/skills/ccc/SKILL.md",
+      "id": "ccc_skill",
+      "community": 9,
+      "norm_label": "ccc skill definition"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "internal_provider_provider_go",
+      "target": "provider_provider",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "internal_provider_provider_go",
+      "target": "provider_completionrequest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "internal_provider_provider_go",
+      "target": "provider_message",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "internal_provider_provider_go",
+      "target": "provider_completionresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L40",
+      "weight": 1.0,
+      "source": "internal_provider_provider_go",
+      "target": "provider_choice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/provider/provider.go",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "internal_provider_provider_go",
+      "target": "provider_usage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "internal/gateway/gateway.go",
+      "source": "gateway_gateway",
+      "target": "provider_provider"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "internal/provider/openai/openai.go",
+      "source": "openai_openai",
+      "target": "provider_provider"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/provider/openai/openai.go",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "internal_provider_openai_openai_go",
+      "target": "openai_openaiprovider",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/provider/openai/openai.go",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "internal_provider_openai_openai_go",
+      "target": "openai_openai_newopenaiprovider",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/provider/openai/openai.go",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "openai_openaiprovider",
+      "target": "openai_openaiprovider_name",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/provider/openai/openai.go",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "openai_openaiprovider",
+      "target": "openai_openaiprovider_complete",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "cmd/tendr/main.go",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "tendr_main_runstart",
+      "target": "openai_openai_newopenaiprovider"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/config/config.go",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "internal_config_config_go",
+      "target": "config_config",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/config/config.go",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "internal_config_config_go",
+      "target": "config_serverconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/config/config.go",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "internal_config_config_go",
+      "target": "config_providersconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/config/config.go",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "internal_config_config_go",
+      "target": "config_providersettings",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/config/config.go",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "internal_config_config_go",
+      "target": "config_modelaliasconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/config/config.go",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "internal_config_config_go",
+      "target": "config_config_load",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/config/config.go",
+      "source_location": "L68",
+      "weight": 1.0,
+      "source": "internal_config_config_go",
+      "target": "config_config_validate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "cmd/tendr/main.go",
+      "source": "tendr_main",
+      "target": "config_config"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "internal/config/config.go",
+      "source": "config_config",
+      "target": "config_yaml"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/config/config.go",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "config_config_load",
+      "target": "config_config_validate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "cmd/tendr/main.go",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "tendr_main_runstart",
+      "target": "config_config_load"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "internal_gateway_gateway_go",
+      "target": "gateway_server",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "internal_gateway_gateway_go",
+      "target": "gateway_gateway_newserver",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "gateway_server",
+      "target": "gateway_server_setuproutes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "gateway_server",
+      "target": "gateway_server_handlechatcompletions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L67",
+      "weight": 1.0,
+      "source": "gateway_server",
+      "target": "gateway_server_start",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L72",
+      "weight": 1.0,
+      "source": "gateway_server",
+      "target": "gateway_server_stop",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/gateway/gateway.go",
+      "source_location": "L38",
+      "weight": 1.0,
+      "source": "gateway_gateway_newserver",
+      "target": "gateway_server_setuproutes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "cmd/tendr/main.go",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "tendr_main_runstart",
+      "target": "gateway_gateway_newserver"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "internal/logger/logger.go",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "internal_logger_logger_go",
+      "target": "logger_logger_init",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "cmd/tendr/main.go",
+      "source_location": "L58",
+      "weight": 1.0,
+      "source": "tendr_main_runstart",
+      "target": "logger_logger_init"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".gemini/settings.json",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "gemini_settings_json",
+      "target": "gemini_settings_hooks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": ".gemini/settings.json",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "gemini_settings_hooks",
+      "target": "gemini_settings_hooks_beforetool",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "cmd/tendr/main.go",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "cmd_tendr_main_go",
+      "target": "tendr_main_main",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "cmd/tendr/main.go",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "cmd_tendr_main_go",
+      "target": "tendr_main_runstart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "cmd/tendr/main.go",
+      "source_location": "L83",
+      "weight": 1.0,
+      "source": "cmd_tendr_main_go",
+      "target": "tendr_main_runinit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "cmd/tendr/main.go",
+      "source": "tendr_main",
+      "target": "logger_logger"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "cmd/tendr/main.go",
+      "source": "tendr_main",
+      "target": "gateway_gateway"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "cmd/tendr/main.go",
+      "source": "tendr_main",
+      "target": "openai_openai"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "README.md",
+      "source": "readme_md",
+      "target": "agents_md"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.95,
+      "source_file": "docs/PLAN.md",
+      "source": "docs_plan",
+      "target": "agents_md"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/PRD.md",
+      "source": "docs_prd",
+      "target": "docs_architecture"
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "tendr_core_architecture",
+      "label": "TENDR Core Architecture",
+      "nodes": [
+        "tendr_main",
+        "gateway_gateway",
+        "provider_provider",
+        "config_config"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "AGENTS.md"
+    }
+  ],
+  "built_at_commit": "14b3227f222bb4023130e3517510b7c3cd1ebcb2"
+}

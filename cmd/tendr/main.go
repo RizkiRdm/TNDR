@@ -11,7 +11,12 @@ import (
 	"github.com/RizkiRdm/TNDR/internal/config"
 	"github.com/RizkiRdm/TNDR/internal/gateway"
 	"github.com/RizkiRdm/TNDR/internal/logger"
+	"github.com/RizkiRdm/TNDR/internal/provider"
+	"github.com/RizkiRdm/TNDR/internal/provider/anthropic"
+	"github.com/RizkiRdm/TNDR/internal/provider/gemini"
+	"github.com/RizkiRdm/TNDR/internal/provider/groq"
 	"github.com/RizkiRdm/TNDR/internal/provider/openai"
+	"github.com/RizkiRdm/TNDR/internal/router"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -57,9 +62,27 @@ func runStart(cmd *cobra.Command, args []string) {
 
 	logger.Init(cfg.Server.LogLevel, "logs")
 
-	// For Stage 1, we just use OpenAI provider
-	p := openai.NewOpenAIProvider(cfg.Providers.OpenAI.APIKey)
-	server := gateway.NewServer(cfg.Server.Port, p)
+	// Initialize all providers
+	providers := make(map[string]provider.Provider)
+	
+	if cfg.Providers.OpenAI.APIKey != "" {
+		providers["openai"] = openai.NewOpenAIProvider(cfg.Providers.OpenAI.APIKey)
+	}
+	if cfg.Providers.Anthropic.APIKey != "" {
+		providers["anthropic"] = anthropic.NewAnthropicProvider(cfg.Providers.Anthropic.APIKey)
+	}
+	if cfg.Providers.Gemini.APIKey != "" {
+		providers["gemini"] = gemini.NewGeminiProvider(cfg.Providers.Gemini.APIKey)
+	}
+	if cfg.Providers.Groq.APIKey != "" {
+		providers["groq"] = groq.NewGroqProvider(cfg.Providers.Groq.APIKey)
+	}
+
+	// Initialize router
+	r := router.NewRouter(cfg, providers)
+	
+	// Initialize server
+	server := gateway.NewServer(cfg.Server.Port, r)
 
 	go func() {
 		if err := server.Start(); err != nil {

@@ -1,0 +1,1 @@
+{"nodes": [{"id": "openai_openai", "label": "OpenAI Provider Adapter", "file_type": "code", "source_file": "internal/provider/openai/openai.go"}], "edges": [{"source": "openai_openai", "target": "provider_provider", "relation": "implements", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "internal/provider/openai/openai.go"}], "hyperedges": []}

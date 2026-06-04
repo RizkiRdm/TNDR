@@ -1,351 +1,344 @@
-# PRD.md — buruh
-# Product Requirements Document
+# PRD.md — TENDR
+# Tokenized Engine for Networked Distributed External Routing
 
 Document Version: 1.0.0
-Project: buruh — Distributed Task Queue Engine
 Status: MVP Definition
-Author: solo developer
-License: MIT
+Type: Open Source CLI + TUI Tool
 
 ---
 
 ## 1. Project Summary
 
 ### Overview
-
-buruh is an open-source distributed task queue engine written in Go.
-It provides a reliable, observable mechanism for enqueueing, distributing,
-and executing background tasks across a configurable pool of concurrent workers.
-
-buruh ships with two primary artifacts:
-
-1. **Core engine** — embeddable Go library + standalone binary
-2. **Web dashboard** — realtime HTML/CSS/JS visualizer served by the engine itself
+TENDR is a self-hosted, single-binary AI gateway written in Go. It runs locally on a developer's machine and acts as a unified proxy between developer tools and multiple AI providers.
 
 ### Objective
-
-Build a production-usable task queue engine that:
-- developers can embed in their Go projects as a library
-- developers can run as a standalone daemon process
-- non-technical stakeholders can observe via a web dashboard
-- junior developers can study to understand how task queues work
+Give developers a single local endpoint that handles provider routing, fallback, caching, and cost tracking — without managing multiple API keys, SDKs, or provider-specific configurations in each project.
 
 ### Value Proposition
-
-| For whom          | Value delivered                                                   |
-|-------------------|-------------------------------------------------------------------|
-| Junior developers | Concrete, readable reference implementation of a task queue       |
-| Backend engineers | Embeddable Go library with clean API, no magic                    |
-| Open source users | MIT-licensed, zero paid dependency, single binary deployment      |
-| Non-technical     | Visual dashboard — see workers, tasks, and queues in realtime     |
+Install once. Point all your tools at `localhost:4821`. Never touch provider config again.
 
 ---
 
 ## 2. Target Users
 
-### Primary — Junior Backend Developer
+### Primary — Solo Developer / Indie Hacker
+- Builds personal projects, freelance systems, or indie SaaS
+- Uses AI heavily in development workflow (Cursor, Continue.dev, Cline, etc.)
+- Budget-sensitive — wants to know exactly what they are spending
+- Does not want operational overhead
+- Installs tools via single binary or package manager
 
-- **Profile:** 0–2 years experience, learning Go or already writing Go
-- **Motivation:** Understand how task queues work by reading and running real code
-- **Frustration:** Existing tools (BullMQ, Sidekiq, Asynq) are complex, opaque, or language-locked
-- **Technical sophistication:** Medium — can run CLI tools, understands HTTP, knows basic Go syntax
-- **Use case:** Study reference, portfolio inspiration, small project background jobs
+**Frustrations:**
+- Paying for multiple provider subscriptions
+- Not knowing how much a session actually cost
+- Manually switching providers when one goes down
+- Re-configuring API keys in every project
 
-### Secondary — Solo / Indie Developer
-
-- **Profile:** Building side projects or small products solo
-- **Motivation:** Need background job processing without operational overhead of full message broker
-- **Frustration:** RabbitMQ/Kafka overkill; hosted solutions require paid accounts
-- **Technical sophistication:** High — comfortable with Go, Docker, self-hosting
-- **Use case:** Production background job processing for small-to-medium workload
-
-### Tertiary — Non-Technical Observer
-
-- **Profile:** HR, PM, student, or curious non-developer
-- **Motivation:** Understand "what does a task queue actually do" visually
-- **Frustration:** Documentation is abstract, diagrams are static
-- **Technical sophistication:** Low — cannot read code, needs visual explanation
-- **Use case:** Open the dashboard URL, watch tasks move through workers in realtime
+### Secondary — Small Engineering Team
+- 2–10 engineers sharing AI tooling budget
+- Needs shared gateway for consistent provider access
+- Wants centralized cost visibility
 
 ---
 
 ## 3. Problem Statement
 
-### The Problem
+Developers using AI tools face three friction points:
 
-Background job processing is a foundational backend pattern.
-Every production application eventually needs it.
+**Reliability friction** — A single provider going down, rate-limiting, or timing out breaks the entire workflow. There is no automatic fallback.
 
-Existing solutions have one of three problems:
+**Cost opacity** — Most tools either show no cost tracking or show inaccurate costs based on stale pricing tables. Developers are surprised by actual bills.
 
-**Problem A — Too complex for learning:**
-Asynq, BullMQ, Sidekiq are mature tools but their source code is optimized
-for production, not comprehension. A junior developer reading Asynq source
-will drown in abstractions before understanding the core concept.
+**Integration friction** — Every project needs its own provider configuration. Switching providers requires code changes.
 
-**Problem B — Requires paid infrastructure:**
-Many hosted queue solutions (Inngest, Trigger.dev free tier) require account
-creation, credit card, or have usage limits that break free experimentation.
-
-**Problem C — No visual feedback:**
-All existing OSS task queues are pure code — no built-in visualizer.
-Understanding worker behavior requires reading logs or external APM tools.
-
-### Why It Matters
-
-A developer who cannot visualize how a task queue works will:
-- misuse it (wrong retry logic, wrong concurrency settings)
-- over-engineer alternatives (rolling their own with channels)
-- underestimate failure modes (no dead letter handling)
-
-buruh solves all three problems simultaneously:
-- readable, idiomatic Go source code
-- zero paid dependency (Valkey is free + OSS)
-- built-in realtime dashboard
-
-### Measurable Impact
-
-- A developer can run buruh locally within 5 minutes of cloning the repo
-- A non-technical person can understand worker behavior within 60 seconds of opening dashboard
-- A junior developer can trace a task from enqueue to completion in the source code within 30 minutes
+TENDR solves all three by acting as a local smart proxy: one endpoint, automatic fallback, accurate cost tracking.
 
 ---
 
 ## 4. Success Metrics
 
-All metrics are measurable. Invalid metrics are excluded.
-
-| Metric                                      | Target        | Measurement Method                        |
-|---------------------------------------------|---------------|-------------------------------------------|
-| Time-to-first-task (clone → task processed) | < 5 minutes   | Manual stopwatch test on fresh machine    |
-| Dashboard initial load time                 | < 1 second    | Browser DevTools Network tab              |
-| SSE first event delivery latency            | < 500ms       | Timestamp delta: enqueue → dashboard event|
-| Worker throughput (single node)             | > 100 tasks/s | Benchmark test: 10k tasks, 10 workers     |
-| Dashboard CPU usage (browser, idle)         | < 5% CPU      | Browser Task Manager during idle stream   |
-| Enqueue API p95 latency                     | < 10ms        | Go benchmark test                         |
-| Task state accuracy                         | 100%          | Integration test: all state transitions   |
-| Retry correctness                           | 100%          | Unit test: max retry → DLQ transition     |
-| Dashboard readability (non-tech user)       | Understands worker state in < 60s | Manual user test |
+| Metric | Target |
+|---|---|
+| Time from install to first successful proxied request | < 5 minutes |
+| Binary size | < 30MB |
+| Gateway latency overhead | < 50ms p95 |
+| Cache hit reduces cost to | $0.00 |
+| Cost tracking accuracy vs provider dashboard | < 2% variance |
+| TUI startup time | < 500ms |
+| Fallback trigger to next provider | < 3s |
+| Config parse error surfaced to user | 100% with line reference |
 
 ---
 
 ## 5. Core Capabilities (MVP)
 
-These are SYSTEM capabilities, not UI features.
+### 5.1 Unified Proxy Endpoint
+Single local HTTP endpoint, OpenAI-compatible.
+All AI tools that support custom base URL work without modification.
 
-### 5.1 Task Enqueueing
+### 5.2 Multi-Provider Normalization
+Normalize request/response format across:
+- OpenAI
+- Anthropic
+- Google Gemini
+- Groq
 
-- Accept task definitions: name, payload (JSON), queue name, max retries, delay
-- Persist task to Valkey with assigned ID and initial state (pending)
-- Return task ID synchronously to caller
+Each provider has an adapter. Input always follows OpenAI schema. Output always follows OpenAI schema.
 
-### 5.2 Worker Pool Management
+### 5.3 Fallback Engine
+Three modes, user-configured per model alias:
+- `reliable` — fallback on hard errors (5xx, timeout, 429)
+- `fast` — fallback on latency threshold exceeded
+- `smart` — fallback on both conditions
 
-- Initialize N concurrent workers (goroutines) at startup
-- Each worker pulls tasks from assigned queue(s)
-- Worker executes registered handler function for task type
-- Worker reports state transitions: idle → active → success/failed
+Provider chain is ordered. TENDR tries providers in order until one succeeds or all fail.
 
-### 5.3 Task State Machine
+### 5.4 Caching Layer
+Two cache types:
+- **Exact cache** — identical request body hash → return stored response
+- **Semantic cache** — embedding similarity above threshold → return closest stored response
 
-Tasks MUST move through defined states only:
+Cache backend: in-memory (default) + optional disk persistence (bbolt).
+Cache is always opt-in per model alias.
 
-```
-pending → active → success
-pending → active → failed → retrying → active (retry loop)
-retrying → active → failed (max retries) → dead
-```
+### 5.5 Cost Tracking
+Per-request cost calculation using:
+- token counts from provider response
+- pricing table (hardcoded default + GitHub-fetched updates + user YAML override)
 
-No other transitions are valid.
+Stored in SQLite. Queryable via TUI and CLI.
+Every cost entry records which pricing source was used.
 
-### 5.4 Retry Engine
+### 5.6 Rate Limiting
+Per-API-key and per-provider rate limiting.
+Prevents hitting provider limits accidentally.
+Configurable in YAML.
 
-- Configurable max retry count per task
-- Exponential backoff between retries: base 1s, multiplier 2x, max 60s
-- Retry count tracked in task record
-- On max retry exceeded: move task to Dead Letter Queue (DLQ)
+### 5.7 JSONL Request Logging
+Every request logged to JSONL file with rotation.
+Schema compatible with OpenTelemetry, Grafana Loki, Datadog.
 
-### 5.5 Dead Letter Queue
+### 5.8 TUI (Terminal UI)
+Interactive dashboard via Bubble Tea.
+Tabs: Dashboard | Cost | Cache | Config | Logs
 
-- Separate queue for tasks that exceeded max retries
-- Tasks in DLQ are not re-processed automatically
-- DLQ visible in dashboard
-- DLQ count exposed via metrics endpoint
-
-### 5.6 HTTP API
-
-- Enqueue endpoint: `POST /tasks`
-- Task status endpoint: `GET /tasks/{id}`
-- Queue stats endpoint: `GET /queues`
-- Metrics endpoint: `GET /metrics`
-- Health check endpoint: `GET /health`
-
-### 5.7 Realtime SSE Stream
-
-- Single SSE endpoint: `GET /stream`
-- Broadcasts all state change events to connected dashboard clients
-- Event payload: JSON with task ID, worker ID, from_state, to_state, timestamp
-- Reconnect handled by browser EventSource API natively
-
-### 5.8 Web Dashboard
-
-- Served by engine itself at `GET /`
-- Static HTML/CSS/JS — no build step, no framework
-- Displays: worker lanes, queue depth bars, metric cards, event log
-- Worker lane drag-to-reorder (layout only, no queue mutation)
-- Queue bar panel zoom (visual only)
-- No dashboard action modifies queue state
-
-### 5.9 Handler Registration
-
-- Developer registers handlers: `queue.Register("task-name", handlerFunc)`
-- Handler signature: `func(ctx context.Context, task *Task) error`
-- Unregistered task type: move to DLQ immediately with error log
+### 5.9 CLI
+All TUI operations accessible as CLI commands for scripting and quick ops.
 
 ---
 
 ## 6. Non-MVP Features
 
-Explicitly deferred. Will NOT be built in v1.
+The following are EXPLICITLY OUT OF SCOPE for v1:
 
-| Feature                        | Reason deferred                                      |
-|--------------------------------|------------------------------------------------------|
-| Task scheduling (cron)         | Increases engine complexity, separate concern        |
-| Task cancellation via dashboard| Requires bidirectional SSE or WebSocket              |
-| Multi-node / distributed workers| Requires distributed lock — separate architecture   |
-| Authentication on dashboard    | Not needed for local/trusted network deployment      |
-| Task payload editing           | Dashboard is read-only observer                      |
-| Plugin system                  | Premature abstraction                                |
-| Mobile dashboard               | Ops tool — desktop only is defensible                |
-| Persistent task history (DB)   | Valkey TTL sufficient for MVP                        |
-| Priority queues                | FIFO sufficient for MVP                              |
-| Rate limiting per queue        | Deferred to v2                                       |
-| Webhook on task completion     | Deferred to v2                                       |
-| Dashboard authentication       | Deferred to v2                                       |
-| gRPC API                       | HTTP sufficient for MVP                              |
-| Prometheus metrics export      | /metrics endpoint sufficient for MVP                 |
+| Feature | Reason |
+|---|---|
+| Web UI / browser dashboard | Binary-first, terminal-native tool |
+| Auth / API key management for users | Single-user local tool in MVP |
+| Billing / payments | Not a SaaS |
+| Multi-user / team shared gateway | v2 feature |
+| Plugin system | Premature abstraction |
+| Agent builder | Out of scope |
+| Image generation / multi-modal | Complexity, defer |
+| Fine-tuning | Out of scope |
+| Kubernetes / Docker orchestration | Self-hosted binary only |
+| Prometheus metrics endpoint | v2 feature |
+| OpenTelemetry exporter | v2 feature |
+| Workflow automation | Out of scope |
 
 ---
 
 ## 7. User Flows
 
-### 7.1 Primary Flow — Developer Enqueues a Task
+### Flow 1 — Installation and First Request
 
 ```
-1. Developer imports buruh library OR runs buruh binary
-2. Developer registers handler: queue.Register("send-email", handler)
-3. Developer starts engine: engine.Start()
-4. Developer calls: client.Enqueue("send-email", payload)
-5. buruh assigns task ID, persists to Valkey, state = pending
-6. Available worker picks up task, state = active
-7. Worker executes handler
-8. On success: state = success, task TTL set (default 24h)
-9. On failure: state = failed → retry logic evaluates
-10. On max retry: state = dead, moved to DLQ
+Developer downloads binary (brew / curl / go install)
+  ↓
+tendr init → generates config.yaml with guided prompts
+  ↓
+Developer adds API keys to config.yaml
+  ↓
+tendr start → gateway running on localhost:4821
+  ↓
+Developer points Cursor / app to http://localhost:4821/v1
+  ↓
+First request proxied successfully
+  ↓
+tendr → opens TUI, shows first request in logs
 ```
 
-### 7.2 Secondary Flow — Non-Technical Observer Opens Dashboard
+### Flow 2 — Fallback Triggered
 
 ```
-1. Observer opens browser: http://localhost:8080
-2. Dashboard loads (< 1s)
-3. SSE connection established automatically
-4. Worker lanes render — showing worker count and current state
-5. Observer watches tasks appear in worker lanes (active state = amber)
-6. Observer watches tasks complete (success state = green, fade out)
-7. Observer sees queue depth bars rise/fall in realtime
-8. Observer reads event log to understand what happened
+Request arrives at TENDR
+  ↓
+Route to primary provider (OpenAI)
+  ↓
+Provider returns 429 (rate limit)
+  ↓
+Fallback engine detects trigger condition
+  ↓
+Route to secondary provider (Anthropic)
+  ↓
+Success → response returned to client
+  ↓
+Log entry records: fallback_used: true, fallback_reason: "429"
 ```
 
-### 7.3 Edge Case — Worker Handler Panics
+### Flow 3 — Cache Hit
 
 ```
-1. Worker goroutine executes handler
-2. Handler panics
-3. buruh recover() catches panic
-4. Task state → failed
-5. Error message logged: "handler panic: {message}"
-6. Retry logic evaluates normally
-7. Worker goroutine recovers and picks next task (does not crash engine)
+Request arrives at TENDR
+  ↓
+Hash request body
+  ↓
+Exact match found in cache
+  ↓
+Return cached response immediately
+  ↓
+Cost recorded as $0.00, cache_hit: true
+  ↓
+No provider request made
 ```
 
-### 7.4 Edge Case — Valkey Connection Lost
+### Flow 4 — Cost Review in TUI
 
 ```
-1. Engine loses connection to Valkey
-2. In-flight tasks continue executing (already in worker memory)
-3. New enqueue attempts return error: "storage unavailable"
-4. Engine attempts reconnect with exponential backoff
-5. Dashboard SSE continues streaming (engine process still alive)
-6. Dashboard topbar shows: "storage disconnected" warning
-7. On reconnect: engine resumes normal operation
-```
-
-### 7.5 Edge Case — SSE Client Disconnects
-
-```
-1. Browser tab closes or network drops
-2. Server detects broken SSE connection
-3. Server removes client from broadcast list
-4. No error, no crash
-5. Browser EventSource API automatically reconnects on tab reopen
-6. Dashboard receives full state snapshot on reconnect (not just delta)
-```
-
-### 7.6 Edge Case — Unregistered Task Type
-
-```
-1. Task enqueued with type "unknown-handler"
-2. Worker picks up task, state = active
-3. Worker looks up handler registry — not found
-4. Task state → dead immediately (no retry)
-5. Error logged: "no handler registered for task type: unknown-handler"
-6. DLQ count incremented
-7. Dashboard DLQ badge updates
+Developer opens TUI: tendr
+  ↓
+Navigates to Cost tab
+  ↓
+Sees: today $0.042 | this week $0.31 | this month $1.24
+  ↓
+Drills into model breakdown
+  ↓
+Sees pricing source for each entry
+  ↓
+Exports to CSV if needed
 ```
 
 ---
 
-## 8. High-Level Tech Stack
+## 8. Configuration Schema (YAML)
 
-| Layer           | Technology              | Justification                                           |
-|-----------------|-------------------------|---------------------------------------------------------|
-| Language        | Go 1.22+                | Native goroutines, single binary, strong std library    |
-| Broker/Storage  | Valkey 7.x              | Redis-compatible, BSD licensed, free, run local         |
-| Valkey client   | `github.com/valkey-io/valkey-go` | Official client, maintained by Valkey project |
-| HTTP server     | `net/http` (stdlib)     | No framework needed for 5 endpoints                     |
-| Dashboard       | HTML + CSS + Vanilla JS | No build step, no framework, no npm                     |
-| SSE             | `net/http` + `text/event-stream` | Native, no library needed                    |
-| Configuration   | YAML file + env vars    | Standard ops pattern                                    |
-| Testing         | `testing` (stdlib) + `testify` | Standard Go testing stack                      |
-| CI/CD           | GitHub Actions          | Free tier, sufficient for OSS project                   |
-| Binary release  | `goreleaser`            | Multi-platform binary distribution                      |
+```yaml
+tendr:
+  port: 4821
+  log_level: info
+  log_file: ~/.tendr/logs/tendr.jsonl
+  log_rotation:
+    max_size_mb: 50
+    max_backups: 5
+
+providers:
+  openai:
+    api_key: "sk-..."
+    timeout_ms: 30000
+  anthropic:
+    api_key: "sk-ant-..."
+    timeout_ms: 30000
+  gemini:
+    api_key: "AI..."
+    timeout_ms: 30000
+  groq:
+    api_key: "gsk_..."
+    timeout_ms: 10000
+
+models:
+  - alias: "default"
+    fallback_mode: reliable
+    providers:
+      - provider: openai
+        model: gpt-4o
+        priority: 1
+      - provider: anthropic
+        model: claude-3-5-sonnet-20241022
+        priority: 2
+
+  - alias: "fast"
+    fallback_mode: fast
+    latency_threshold_ms: 5000
+    providers:
+      - provider: groq
+        model: llama-3.1-70b-versatile
+        priority: 1
+      - provider: openai
+        model: gpt-4o-mini
+        priority: 2
+
+  - alias: "coding"
+    fallback_mode: smart
+    latency_threshold_ms: 10000
+    cache:
+      enabled: true
+      type: exact
+      ttl_minutes: 60
+    providers:
+      - provider: openai
+        model: gpt-4o
+        priority: 1
+      - provider: anthropic
+        model: claude-3-5-sonnet-20241022
+        priority: 2
+
+pricing:
+  fetch_on_startup: true
+  pricing_url: "https://raw.githubusercontent.com/username/tendr/main/pricing.json"
+  override:
+    openai:
+      gpt-4o:
+        input_per_1m: 2.50
+        output_per_1m: 10.00
+
+rate_limits:
+  per_minute: 60
+  per_provider:
+    openai: 500
+    groq: 100
+```
 
 ---
 
-## 9. Technical Assumptions
+## 9. Tech Stack
 
-### Constraints
+| Layer | Technology | Rationale |
+|---|---|---|
+| Language | Go 1.22+ | Single binary, fast, strong concurrency |
+| TUI | Bubble Tea + Lip Gloss | De facto standard Go TUI framework |
+| HTTP Server | net/http + chi router | Stdlib-first, minimal dependency |
+| Config | viper + YAML | Standard Go config library |
+| Database | SQLite via modernc/sqlite | No CGO, pure Go, zero dependency |
+| Cache (memory) | sync.Map + custom LRU | Zero dependency |
+| Cache (disk) | bbolt | Pure Go embedded KV store |
+| Logging | zerolog | JSONL output, structured, fast |
+| Log rotation | lumberjack | Battle-tested, integrates with zerolog |
+| Embeddings (semantic cache) | local via ollama OR provider API | Optional feature |
+| Build | goreleaser | Cross-platform binary releases |
 
-- Single-node deployment only (v1)
-- Valkey MUST be running and reachable before engine starts
-- Dashboard MUST work without JavaScript frameworks
-- Engine MUST compile to a single static binary
-- Engine MUST run on CPU without AVX support (no AVX-dependent dependencies)
-- All dependencies MUST be MIT or BSD licensed
+---
 
-### Scale Assumptions
+## 10. Technical Constraints
 
-- Expected workload: 1–1,000 tasks/minute
-- Worker count: 1–50 workers
-- Queue count: 1–10 queues
-- Concurrent dashboard clients: 1–10
-- No assumption of multi-tenancy
-- No assumption of task payload > 1MB
+- MUST compile to single binary, no runtime dependencies
+- MUST NOT use CGO (ensures cross-platform builds)
+- MUST run on macOS, Linux, Windows
+- MUST NOT require Docker or any container runtime
+- MUST NOT require network access after initial pricing fetch
+- SQLite database stored at `~/.tendr/tendr.db`
+- Config stored at `~/.tendr/config.yaml`
+- Logs stored at `~/.tendr/logs/`
 
-### Integration Assumptions
+---
 
-- No authentication required in v1
-- No TLS in v1 (assumed behind reverse proxy if public)
-- No external metrics system in v1 (self-contained /metrics endpoint)
-- No persistent task history beyond Valkey TTL
+## 11. Anti-Mangkrak Rules (Project Discipline)
+
+These rules exist because the developer has identified a personal pattern of abandoning projects. They are part of the PRD intentionally.
+
+1. Each stage MUST be independently shippable
+2. Each stage MUST be completable within 1 week
+3. A new stage MUST NOT start before current stage is pushed to GitHub
+4. New ideas MUST go to PARKING_LOT.md — not into code
+5. No feature is valid unless it exists in PLAN.md
+6. If a stage takes longer than 1 week, scope MUST be cut — not extended
