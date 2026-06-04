@@ -31,21 +31,23 @@ func (r *Router) Complete(ctx context.Context, modelAlias string, req *provider.
 		return nil, fmt.Errorf("model alias not found: %s", modelAlias)
 	}
 
-	if len(modelCfg.Providers) == 0 {
+	var pList []provider.Provider
+	for _, name := range modelCfg.Providers {
+		if p, ok := r.providers[name]; ok {
+			pList = append(pList, p)
+		}
+	}
+
+	if len(pList) == 0 {
 		return nil, fmt.Errorf("no providers configured for alias: %s", modelAlias)
 	}
 
-	// For Stage 2, just pick the first provider
-	providerName := modelCfg.Providers[0]
-	p, ok := r.providers[providerName]
-	if !ok {
-		return nil, fmt.Errorf("provider not found: %s", providerName)
-	}
-
-	return p.Complete(ctx, req)
+	fb := NewFallback(FallbackMode(modelCfg.FallbackMode), pList)
+	return fb.Execute(ctx, req)
 }
 
 func (r *Router) Stream(ctx context.Context, modelAlias string, req *provider.CompletionRequest) (<-chan *provider.StreamResponse, <-chan error) {
+	// Stream fallback not yet implemented
 	modelCfg, ok := r.models[modelAlias]
 	if !ok {
 		errChan := make(chan error, 1)

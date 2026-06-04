@@ -25,7 +25,8 @@ type ProvidersConfig struct {
 }
 
 type ProviderSettings struct {
-	APIKey string `mapstructure:"api_key"`
+	APIKey  string `mapstructure:"api_key"`
+	Timeout int    `mapstructure:"timeout_ms"`
 }
 
 type ModelAliasConfig struct {

@@ -70,15 +70,15 @@ Next session starts at: Implementing Anthropic provider.
 **Shippable:** Users can switch provider via model alias in config.
 **Time limit:** 1 week
 
-- [ ] Implement `internal/provider/anthropic` adapter
-- [ ] Implement `internal/provider/gemini` adapter
-- [ ] Implement `internal/provider/groq` adapter
-- [ ] Implement `internal/router` — basic provider selection by model alias
-- [ ] Define typed provider errors: `ErrRateLimit`, `ErrTimeout`, `ErrProviderDown`, `ErrInvalidKey`
-- [ ] Wire: gateway → router → provider selection
-- [ ] Test: each provider returns normalized OpenAI-compatible response
-- [ ] Verify streaming responses pass through correctly
-- [ ] Push to GitHub, update README with multi-provider config example
+- [x] Implement `internal/provider/anthropic` adapter
+- [x] Implement `internal/provider/gemini` adapter
+- [x] Implement `internal/provider/groq` adapter
+- [x] Implement `internal/router` — basic provider selection by model alias
+- [x] Define typed provider errors: `ErrRateLimit`, `ErrTimeout`, `ErrProviderDown`, `ErrInvalidKey`
+- [x] Wire: gateway → router → provider selection
+- [x] Test: each provider returns normalized OpenAI-compatible response
+- [x] Verify streaming responses pass through correctly
+- [x] Push to GitHub, update README with multi-provider config example
 
 **Checkpoint:** 4 providers work. Model alias routes correctly. Streaming works.
 
@@ -89,16 +89,16 @@ Next session starts at: Implementing Anthropic provider.
 **Shippable:** Configure fallback chain, gateway handles provider failures gracefully.
 **Time limit:** 1 week
 
-- [ ] Implement `internal/router/fallback.go` — provider chain execution
-- [ ] Implement `reliable` mode — fallback on hard errors
+- [x] Implement `internal/router/fallback.go` — provider chain execution
+- [x] Implement `reliable` mode — fallback on hard errors
 - [ ] Implement `fast` mode — fallback on latency threshold
 - [ ] Implement `smart` mode — combined conditions
-- [ ] Add per-provider timeout configuration
-- [ ] Log fallback events: `fallback_triggered`, `fallback_from`, `fallback_reason`
+- [x] Add per-provider timeout configuration
+- [x] Log fallback events: `fallback_triggered`, `fallback_from`, `fallback_reason`
 - [ ] Return HTTP 502 with clear error if all providers exhausted
-- [ ] Test: kill primary provider → fallback triggers → secondary responds
+- [x] Test: kill primary provider → fallback triggers → secondary responds
 - [ ] Test: simulate slow provider → fast mode fallback triggers
-- [ ] Push to GitHub
+- [x] Push to GitHub
 
 **Checkpoint:** Fallback works. All 3 modes tested. Provider failures are handled gracefully.
 
