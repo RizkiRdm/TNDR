@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/RizkiRdm/TNDR/internal/config"
 	"github.com/RizkiRdm/TNDR/internal/provider"
@@ -42,7 +43,7 @@ func (r *Router) Complete(ctx context.Context, modelAlias string, req *provider.
 		return nil, fmt.Errorf("no providers configured for alias: %s", modelAlias)
 	}
 
-	fb := NewFallback(FallbackMode(modelCfg.FallbackMode), pList)
+	fb := NewFallback(FallbackMode(modelCfg.FallbackMode), pList, 500*time.Millisecond)
 	return fb.Execute(ctx, req)
 }
 

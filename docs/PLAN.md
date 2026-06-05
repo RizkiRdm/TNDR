@@ -91,13 +91,13 @@ Next session starts at: Implementing Anthropic provider.
 
 - [x] Implement `internal/router/fallback.go` — provider chain execution
 - [x] Implement `reliable` mode — fallback on hard errors
-- [ ] Implement `fast` mode — fallback on latency threshold
-- [ ] Implement `smart` mode — combined conditions
+- [x] Implement `fast` mode — fallback on latency threshold
+- [x] Implement `smart` mode — combined conditions
 - [x] Add per-provider timeout configuration
 - [x] Log fallback events: `fallback_triggered`, `fallback_from`, `fallback_reason`
-- [ ] Return HTTP 502 with clear error if all providers exhausted
+- [x] Return HTTP 502 with clear error if all providers exhausted
 - [x] Test: kill primary provider → fallback triggers → secondary responds
-- [ ] Test: simulate slow provider → fast mode fallback triggers
+- [x] Test: simulate slow provider → fast mode fallback triggers
 - [x] Push to GitHub
 
 **Checkpoint:** Fallback works. All 3 modes tested. Provider failures are handled gracefully.

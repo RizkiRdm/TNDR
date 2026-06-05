@@ -30,14 +30,16 @@ func (e *ProviderError) Error() string {
 
 // Fallback handles provider chain execution based on mode
 type Fallback struct {
-	providers []provider.Provider
-	mode      FallbackMode
+	providers        []provider.Provider
+	mode             FallbackMode
+	latencyThreshold time.Duration
 }
 
-func NewFallback(mode FallbackMode, providers []provider.Provider) *Fallback {
+func NewFallback(mode FallbackMode, providers []provider.Provider, latencyThreshold time.Duration) *Fallback {
 	return &Fallback{
-		mode:      mode,
-		providers: providers,
+		mode:             mode,
+		providers:        providers,
+		latencyThreshold: latencyThreshold,
 	}
 }
 
@@ -45,23 +47,31 @@ func NewFallback(mode FallbackMode, providers []provider.Provider) *Fallback {
 func (f *Fallback) Execute(ctx context.Context, req *provider.CompletionRequest) (*provider.CompletionResponse, error) {
 	var lastErr error
 
-	for _, p := range f.providers {
+	for i, p := range f.providers {
 		start := time.Now()
 		resp, err := p.Complete(ctx, req)
 		latency := time.Since(start)
 
 		if err == nil {
-			if f.mode == ModeFast && latency > 500*time.Millisecond && len(f.providers) > 1 {
-				// Fast mode: if too slow, try next if available
-				// This logic is simple: if slow, continue loop
+			isLast := i == len(f.providers)-1
+			
+			// Fast mode: trigger fallback if slow, unless it's the last provider
+			if f.mode == ModeFast && latency > f.latencyThreshold && !isLast {
 				continue
 			}
+			
+			// Smart mode: trigger fallback if slow OR hard error, unless last
+			if f.mode == ModeSmart && latency > f.latencyThreshold && !isLast {
+				continue
+			}
+
 			return resp, nil
 		}
 
 		lastErr = err
 
-		if f.mode == ModeReliable {
+		// Reliable and Smart modes: trigger fallback on hard errors
+		if f.mode == ModeReliable || f.mode == ModeSmart {
 			if !isHardError(err) {
 				return nil, err
 			}
