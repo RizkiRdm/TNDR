@@ -3,6 +3,8 @@ package router
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/RizkiRdm/TNDR/internal/provider"
@@ -15,6 +17,16 @@ const (
 	ModeFast     FallbackMode = "fast"
 	ModeSmart    FallbackMode = "smart"
 )
+
+type ProviderError struct {
+	StatusCode int
+	Message    string
+	Err        error
+}
+
+func (e *ProviderError) Error() string {
+	return fmt.Sprintf("provider error: %s: %v", e.Message, e.Err)
+}
 
 // Fallback handles provider chain execution based on mode
 type Fallback struct {
@@ -56,7 +68,11 @@ func (f *Fallback) Execute(ctx context.Context, req *provider.CompletionRequest)
 		}
 	}
 
-	return nil, lastErr
+	return nil, &ProviderError{
+		StatusCode: http.StatusBadGateway,
+		Message:    "all providers exhausted",
+		Err:        lastErr,
+	}
 }
 
 func isHardError(err error) bool {
