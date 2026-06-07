@@ -140,7 +140,7 @@ Next session starts at: Implementing Anthropic provider.
 - [x] Implement CLI: `tendr cache clear`
 - [x] Implement CLI: `tendr cache clear --alias <name>` (Parked: schema doesn't support alias tracking)
 - [x] Optional: implement `internal/cache/disk.go` — bbolt persistence
-- [ ] Push to GitHub
+- [x] Push to GitHub
 
 **Checkpoint:** Cache works. Hit rate is measurable. CLI commands work.
 
@@ -154,10 +154,10 @@ Next session starts at: Implementing Anthropic provider.
 - [x] Implement `internal/ratelimit/limiter.go` — token bucket, in-memory
 - [x] Implement per-model-alias rate limit
 - [x] Implement per-provider rate limit
-- [x] Return HTTP 429 with `retry_after_ms` on limit exceeded
-- [x] Log `rate_limit_hit` event
-- [x] Test: exceed limit → 429 returned → retry after cooldown works
-- [x] Push to GitHub
+- [] Return HTTP 429 with `retry_after_ms` on limit exceeded
+- [] Log `rate_limit_hit` event
+- [] Test: exceed limit → 429 returned → retry after cooldown works
+- [] Push to GitHub
 
 **Checkpoint:** Rate limits enforced. 429 responses correct. Logs capture limit hits.
 
@@ -181,7 +181,7 @@ Next session starts at: Implementing Anthropic provider.
 - [ ] Wire: `tendr` (no args) → launch TUI
 - [ ] Wire: `tendr monitor` → launch TUI on Dashboard tab
 - [ ] Wire: `tendr cost` (standalone) → launch TUI on Cost tab
-- [ ] Push to GitHub
+- [x] Push to GitHub
 
 **Checkpoint:** TUI works. All tabs render correctly. Keyboard navigation works. Live data updates.
 

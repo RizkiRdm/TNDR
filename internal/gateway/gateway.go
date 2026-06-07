@@ -67,10 +67,24 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 	// Rate limit check
 	if limiter, ok := s.limiters[req.Model]; ok {
 		if !limiter.Allow() {
-			log.Warn().Str("model", req.Model).Msg("rate_limit_hit")
+			log.Warn().Str("model", req.Model).Msg("model_rate_limit_hit")
 			w.Header().Set("Retry-After", "1")
 			http.Error(w, "rate_limit_exceeded", http.StatusTooManyRequests)
 			return
+		}
+	}
+
+	modelCfg, ok := s.gwRouter.GetModelConfig(req.Model)
+	if ok {
+		for _, p := range modelCfg.Providers {
+			if limiter, ok := s.limiters[p]; ok {
+				if !limiter.Allow() {
+					log.Warn().Str("provider", p).Msg("provider_rate_limit_hit")
+					w.Header().Set("Retry-After", "1")
+					http.Error(w, "rate_limit_exceeded", http.StatusTooManyRequests)
+					return
+				}
+			}
 		}
 	}
 

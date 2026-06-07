@@ -30,6 +30,11 @@ func NewRouter(cfg *config.Config, providers map[string]provider.Provider, track
 	}
 }
 
+func (r *Router) GetModelConfig(alias string) (config.ModelAliasConfig, bool) {
+	cfg, ok := r.models[alias]
+	return cfg, ok
+}
+
 func (r *Router) Complete(ctx context.Context, modelAlias string, req *provider.CompletionRequest) (*provider.CompletionResponse, error) {
 	modelCfg, ok := r.models[modelAlias]
 	if !ok {
