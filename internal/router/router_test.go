@@ -40,7 +40,7 @@ func TestRouter_Fallback(t *testing.T) {
 		"success": &mockProvider{name: "success"},
 	}
 
-	r := NewRouter(cfg, providers)
+	r := NewRouter(cfg, providers, nil)
 	resp, err := r.Complete(context.Background(), "fallback-alias", &provider.CompletionRequest{})
 
 	if err != nil {
@@ -62,7 +62,7 @@ func TestRouter_FastModeFallback(t *testing.T) {
 		"fast": &mockProvider{name: "fast"},
 	}
 
-	r := NewRouter(cfg, providers)
+	r := NewRouter(cfg, providers, nil)
 	resp, err := r.Complete(context.Background(), "fast-alias", &provider.CompletionRequest{})
 
 	if err != nil {

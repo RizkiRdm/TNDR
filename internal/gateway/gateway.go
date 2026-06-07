@@ -5,9 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/RizkiRdm/TNDR/internal/cache"
 	"github.com/RizkiRdm/TNDR/internal/provider"
+	"github.com/RizkiRdm/TNDR/internal/ratelimit"
 	"github.com/RizkiRdm/TNDR/internal/router"
+	"github.com/RizkiRdm/TNDR/internal/store"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog/log"
@@ -17,9 +21,12 @@ type Server struct {
 	httpServer *http.Server
 	router     *chi.Mux
 	gwRouter   *router.Router
+	cache      *cache.Exact
+	store      *store.Store
+	limiters   map[string]*ratelimit.Limiter
 }
 
-func NewServer(port int, r *router.Router) *Server {
+func NewServer(port int, r *router.Router, c *cache.Exact, st *store.Store, l map[string]*ratelimit.Limiter) *Server {
 	mux := chi.NewRouter()
 
 	mux.Use(middleware.RequestID)
@@ -30,6 +37,9 @@ func NewServer(port int, r *router.Router) *Server {
 	s := &Server{
 		router:   mux,
 		gwRouter: r,
+		cache:    c,
+		store:    st,
+		limiters: l,
 		httpServer: &http.Server{
 			Addr:    fmt.Sprintf(":%d", port),
 			Handler: mux,
@@ -54,9 +64,37 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Rate limit check
+	if limiter, ok := s.limiters[req.Model]; ok {
+		if !limiter.Allow() {
+			log.Warn().Str("model", req.Model).Msg("rate_limit_hit")
+			w.Header().Set("Retry-After", "1")
+			http.Error(w, "rate_limit_exceeded", http.StatusTooManyRequests)
+			return
+		}
+	}
+
 	if req.Stream {
 		s.handleStreaming(w, r, &req)
 		return
+	}
+
+	key, err := cache.HashKey(req)
+	if err == nil {
+		if val, ok := s.cache.Get(key); ok {
+			go s.store.RecordCacheHit(context.Background(), key)
+			go s.store.RecordRequest(context.Background(), &store.RequestRecord{
+				ID:            middleware.GetReqID(r.Context()),
+				Model:         req.Model,
+				Cost:          0.0,
+				PricingSource: "cache",
+				CreatedAt:     time.Now().Format(time.RFC3339),
+			})
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-Tendr-Cache", "HIT")
+			w.Write([]byte(val))
+			return
+		}
 	}
 
 	// In TENDR, we use the 'model' field as the alias
@@ -67,7 +105,15 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err == nil {
+		b, err := json.Marshal(resp)
+		if err == nil {
+			s.cache.Set(key, string(b))
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Tendr-Cache", "MISS")
 	json.NewEncoder(w).Encode(resp)
 }
 

@@ -33,6 +33,30 @@ func (s *Store) RecordRequest(ctx context.Context, r *RequestRecord) error {
 	return err
 }
 
+func (s *Store) RecordCacheHit(ctx context.Context, key string) error {
+	query := `INSERT INTO cache_entries (key, value, created_at) VALUES (?, ?, ?)`
+	_, err := s.db.ExecContext(ctx, query, key, "HIT", time.Now().Format(time.RFC3339))
+	return err
+}
+
+func (s *Store) GetCacheStats(ctx context.Context) (int, int, error) {
+	var totalRequests, cacheHits int
+	err := s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM requests").Scan(&totalRequests)
+	if err != nil {
+		return 0, 0, err
+	}
+	err = s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM cache_entries").Scan(&cacheHits)
+	if err != nil {
+		return 0, 0, err
+	}
+	return totalRequests, cacheHits, nil
+}
+
+func (s *Store) ClearCache(ctx context.Context) error {
+	_, err := s.db.ExecContext(ctx, "DELETE FROM cache_entries")
+	return err
+}
+
 func New(dbPath string) (*Store, error) {
 	dir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {

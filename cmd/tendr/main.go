@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/RizkiRdm/TNDR/internal/cache"
 	"github.com/RizkiRdm/TNDR/internal/config"
 	"github.com/RizkiRdm/TNDR/internal/cost"
 	"github.com/RizkiRdm/TNDR/internal/gateway"
@@ -19,6 +20,7 @@ import (
 	"github.com/RizkiRdm/TNDR/internal/provider/gemini"
 	"github.com/RizkiRdm/TNDR/internal/provider/groq"
 	"github.com/RizkiRdm/TNDR/internal/provider/openai"
+	"github.com/RizkiRdm/TNDR/internal/ratelimit"
 	"github.com/RizkiRdm/TNDR/internal/router"
 	"github.com/RizkiRdm/TNDR/internal/store"
 	"github.com/rs/zerolog/log"
@@ -60,7 +62,19 @@ func main() {
 	costCmd.Flags().StringVar(&costProvider, "provider", "", "filter by provider")
 	costCmd.Flags().BoolVar(&costJSON, "json", false, "output in JSON format")
 
-	rootCmd.AddCommand(startCmd, initCmd, costCmd)
+	cacheCmd := &cobra.Command{
+		Use:   "cache",
+		Short: "Manage cache",
+		Run:   runCache,
+	}
+	cacheClearCmd := &cobra.Command{
+		Use:   "clear",
+		Short: "Clear cache",
+		Run:   runCacheClear,
+	}
+	cacheCmd.AddCommand(cacheClearCmd)
+
+	rootCmd.AddCommand(startCmd, initCmd, costCmd, cacheCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -74,6 +88,45 @@ func getDBPath() string {
 		return "tendr.db"
 	}
 	return filepath.Join(home, ".tendr", "tendr.db")
+}
+
+func runCache(cmd *cobra.Command, args []string) {
+	s, err := store.New(getDBPath())
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer s.Close()
+
+	total, hits, err := s.GetCacheStats(context.Background())
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	rate := 0.0
+	if total > 0 {
+		rate = float64(hits) / float64(total) * 100
+	}
+
+	fmt.Printf("Cache Hits:     %d\n", hits)
+	fmt.Printf("Total Requests: %d\n", total)
+	fmt.Printf("Hit Rate:       %.2f%%\n", rate)
+}
+
+func runCacheClear(cmd *cobra.Command, args []string) {
+	s, err := store.New(getDBPath())
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer s.Close()
+
+	if err := s.ClearCache(context.Background()); err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Cache cleared")
 }
 
 func runStart(cmd *cobra.Command, args []string) {
@@ -118,8 +171,17 @@ func runStart(cmd *cobra.Command, args []string) {
 	// Initialize router
 	r := router.NewRouter(cfg, providers, tracker)
 
+	// Initialize cache
+	c := cache.NewExact(5 * time.Minute)
+
+	// Initialize limiters
+	limiters := make(map[string]*ratelimit.Limiter)
+	for _, m := range cfg.Models {
+		limiters[m.Alias] = ratelimit.NewLimiter(10, 20)
+	}
+
 	// Initialize server
-	server := gateway.NewServer(cfg.Server.Port, r)
+	server := gateway.NewServer(cfg.Server.Port, r, c, s, limiters)
 
 	go func() {
 		if err := server.Start(); err != nil {

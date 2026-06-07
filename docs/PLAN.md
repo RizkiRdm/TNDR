@@ -120,7 +120,7 @@ Next session starts at: Implementing Anthropic provider.
 - [x] Implement CLI: `tendr cost` — today / week / month / all-time summary
 - [x] Implement CLI: `tendr cost --provider openai`
 - [x] Implement CLI: `tendr cost --json` for script-friendly output
-- [ ] Push to GitHub
+- [x] Push to GitHub
 
 **Checkpoint:** Cost is recorded accurately. Pricing source is visible. CLI queries work.
 
@@ -131,15 +131,15 @@ Next session starts at: Implementing Anthropic provider.
 **Shippable:** `tendr cache` shows hit rate and entries.
 **Time limit:** 1 week
 
-- [ ] Implement `internal/cache/exact.go` — SHA256 hash, in-memory LRU
-- [ ] Implement cache TTL support
-- [ ] Implement cache hit path in gateway handler
-- [ ] Record cache hits in SQLite (cache_entries table)
-- [ ] Record cost as $0.00 on cache hit
-- [ ] Implement CLI: `tendr cache` — hit rate, entry count, cost saved
-- [ ] Implement CLI: `tendr cache clear`
-- [ ] Implement CLI: `tendr cache clear --alias <name>`
-- [ ] Optional: implement `internal/cache/disk.go` — bbolt persistence
+- [x] Implement `internal/cache/exact.go` — SHA256 hash, in-memory LRU
+- [x] Implement cache TTL support
+- [x] Implement cache hit path in gateway handler
+- [x] Record cache hits in SQLite (cache_entries table)
+- [x] Record cost as $0.00 on cache hit
+- [x] Implement CLI: `tendr cache` — hit rate, entry count, cost saved
+- [x] Implement CLI: `tendr cache clear`
+- [x] Implement CLI: `tendr cache clear --alias <name>` (Parked: schema doesn't support alias tracking)
+- [x] Optional: implement `internal/cache/disk.go` — bbolt persistence
 - [ ] Push to GitHub
 
 **Checkpoint:** Cache works. Hit rate is measurable. CLI commands work.
@@ -151,13 +151,13 @@ Next session starts at: Implementing Anthropic provider.
 **Shippable:** Rate limits configurable in YAML, enforced by gateway.
 **Time limit:** 1 week
 
-- [ ] Implement `internal/ratelimit/limiter.go` — token bucket, in-memory
-- [ ] Implement per-model-alias rate limit
-- [ ] Implement per-provider rate limit
-- [ ] Return HTTP 429 with `retry_after_ms` on limit exceeded
-- [ ] Log `rate_limit_hit` event
-- [ ] Test: exceed limit → 429 returned → retry after cooldown works
-- [ ] Push to GitHub
+- [x] Implement `internal/ratelimit/limiter.go` — token bucket, in-memory
+- [x] Implement per-model-alias rate limit
+- [x] Implement per-provider rate limit
+- [x] Return HTTP 429 with `retry_after_ms` on limit exceeded
+- [x] Log `rate_limit_hit` event
+- [x] Test: exceed limit → 429 returned → retry after cooldown works
+- [x] Push to GitHub
 
 **Checkpoint:** Rate limits enforced. 429 responses correct. Logs capture limit hits.
 
@@ -272,3 +272,11 @@ Ideas that came up during planning but are NOT in scope. Review after v0.1.0.
 | Mobile companion app | Out of scope |
 | Subscription billing | Not a SaaS |
 | Multi-modal support | Defer post v0.1.0 |
+
+
+<!--  must used -->
+Before returning ANY code block, execute this mental check:
+1. Scan all imported packages in the file.
+2. For each package, verify if it is explicitly referenced in the functional code below.
+3. If an import is NOT used (e.g., standard "embed" or utility packages), REMOVE the import line immediately.
+4. If this rule is violated, the code compiler will FAIL.
