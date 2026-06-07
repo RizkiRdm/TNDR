@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/RizkiRdm/TNDR/internal/config"
+	"github.com/RizkiRdm/TNDR/internal/cost"
 	"github.com/RizkiRdm/TNDR/internal/gateway"
 	"github.com/RizkiRdm/TNDR/internal/logger"
 	"github.com/RizkiRdm/TNDR/internal/provider"
@@ -17,12 +20,15 @@ import (
 	"github.com/RizkiRdm/TNDR/internal/provider/groq"
 	"github.com/RizkiRdm/TNDR/internal/provider/openai"
 	"github.com/RizkiRdm/TNDR/internal/router"
+	"github.com/RizkiRdm/TNDR/internal/store"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
 var (
-	configPath string
+	configPath   string
+	costProvider string
+	costJSON     bool
 )
 
 func main() {
@@ -45,12 +51,29 @@ func main() {
 		Run:   runInit,
 	}
 
-	rootCmd.AddCommand(startCmd, initCmd)
+	costCmd := &cobra.Command{
+		Use:   "cost",
+		Short: "Show cost breakdown",
+		Run:   runCost,
+	}
+
+	costCmd.Flags().StringVar(&costProvider, "provider", "", "filter by provider")
+	costCmd.Flags().BoolVar(&costJSON, "json", false, "output in JSON format")
+
+	rootCmd.AddCommand(startCmd, initCmd, costCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func getDBPath() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "tendr.db"
+	}
+	return filepath.Join(home, ".tendr", "tendr.db")
 }
 
 func runStart(cmd *cobra.Command, args []string) {
@@ -62,9 +85,23 @@ func runStart(cmd *cobra.Command, args []string) {
 
 	logger.Init(cfg.Server.LogLevel, "logs")
 
+	// Initialize Store
+	s, err := store.New(getDBPath())
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to initialize store")
+	}
+	defer s.Close()
+
+	// Initialize Pricing and Tracker
+	pm := cost.NewPricingManager()
+	if err := pm.FetchRemote(); err != nil {
+		log.Warn().Err(err).Msg("failed to fetch remote pricing, using embedded")
+	}
+	tracker := cost.NewTracker(s, pm)
+
 	// Initialize all providers
 	providers := make(map[string]provider.Provider)
-	
+
 	if cfg.Providers.OpenAI.APIKey != "" {
 		providers["openai"] = openai.NewOpenAIProvider(cfg.Providers.OpenAI.APIKey)
 	}
@@ -79,8 +116,8 @@ func runStart(cmd *cobra.Command, args []string) {
 	}
 
 	// Initialize router
-	r := router.NewRouter(cfg, providers)
-	
+	r := router.NewRouter(cfg, providers, tracker)
+
 	// Initialize server
 	server := gateway.NewServer(cfg.Server.Port, r)
 
@@ -131,4 +168,37 @@ models:
 		os.Exit(1)
 	}
 	fmt.Println("config.yaml initialized successfully")
+}
+
+func runCost(cmd *cobra.Command, args []string) {
+	s, err := store.New(getDBPath())
+	if err != nil {
+		fmt.Printf("Error initializing store: %v\n", err)
+		os.Exit(1)
+	}
+	defer s.Close()
+
+	summary, err := s.GetCostSummary(context.Background(), costProvider)
+	if err != nil {
+		fmt.Printf("Error getting cost summary: %v\n", err)
+		os.Exit(1)
+	}
+
+	if costJSON {
+		data, _ := json.MarshalIndent(summary, "", "  ")
+		fmt.Println(string(data))
+		return
+	}
+
+	title := "Cost Summary"
+	if costProvider != "" {
+		title = fmt.Sprintf("Cost Summary for %s", costProvider)
+	}
+
+	fmt.Printf("%s\n", title)
+	fmt.Println("====================")
+	fmt.Printf("Today:     $%.4f\n", summary.Today)
+	fmt.Printf("Last 7d:   $%.4f\n", summary.Week)
+	fmt.Printf("Last 30d:  $%.4f\n", summary.Month)
+	fmt.Printf("All Time:  $%.4f\n", summary.AllTime)
 }

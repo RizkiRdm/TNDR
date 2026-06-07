@@ -1,52 +1,30 @@
 {
----
-name: intelligent-feature-implementer
-description: Intelligent full-cycle feature implementer for Laravel, Go Go Fiber, Python FastAPI. When user gives basic prompt about auth, RBAC, multi-user permissions, API, DB, or any feature, ALWAYS follow this exact workflow: 1) Design first (DB model, API spec, security), 2) Choose best stack based on context (Laravel=backoffice, Go=public/high-scale, Python=prototype), 3) Implement complete code + integration, 4) Add tests + edge cases, 5) Verify security (JWT, role-based access: admin=full, user1=halaman A only, user2=halaman B only), 6) Suggest git commit. Use multi-user RBAC with JWT by default. Never ask for clarification unless critical.
-compatibility: Requires Gemini CLI with MCP servers (filesystem, github)
-metadata:
-  version: "1.0"
-  author: rizki
-  focus: software-design-api-db-rbac
----
-
-# Intelligent Feature Implementer Instructions
-
-## Activation Trigger
-User bilang “buatkan”, “implement”, “tambah fitur”, “auth”, “login”, “role”, “permission”, “backoffice”, “public api”, “prototype” — langsung aktifkan skill ini.
-
-## Strict Workflow (ikuti urutan ini, jangan skip)
-1. **Design Phase** (output dulu sebelum coding):
-   - DB modelling (schema, relations, indexing)
-   - API design (endpoints, JWT payload, error handling)
-   - RBAC rules (admin → dashboard full, user1 → halaman A only, user2 → halaman B only, multiple users)
-   - Stack decision (Laravel backoffice / Go public / Python Streamlit prototype)
-
-2. **Implementation**
-   - Generate complete, production-ready code
-   - Include integration points
-   - Follow clean architecture & best practices tiap stack
-
-3. **Verification**
-   - Unit + integration tests
-   - Security checklist (JWT validation, role guard, rate limit)
-   - Edge cases (invalid token, permission denied)
-
-4. **Final Output**
-   - File structure changes
-   - Commands to run (npm install, migrate, test)
-   - Git commit message suggestion
-
-Common patterns:
-- Always use JWT + role claims
-- Multi-user support dengan middleware/guard
-- Never expose sensitive data
   "version": 1,
   "skills": {
-    "ccc": {
-      "source": "cocoindex-io/cocoindex-code",
-      "sourceType": "github",
-      "skillPath": "skills/ccc/SKILL.md",
-      "computedHash": "8816c000c28cf85fba47a7713c02bae5a7af3d69c230ba0be97db3d01ffc27a4"
+    "accessibility": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "bffe3d08cfe92ebad63699f74ce29e35c19850ebfbf474c1463183cfe34d6a09"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "82fb11a63fb1e35ee2469516ed02d54695f783115b1540c0e783197af4240a3a"
+    },
+    "golang-patterns": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "autoskills-registry",
+      "computedHash": "669ccfb110e3a3932669684801fc8992cda87ec6d9c1fd72ff13ae9f5e7c748e"
+    },
+    "golang-testing": {
+      "source": "affaan-m/everything-claude-code",
+      "sourceType": "autoskills-registry",
+      "computedHash": "4c1e0c6805760534d8fd1a9fa2e4b5eb700b402f054254383437bd679d341cbd"
+    },
+    "seo": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "c184da724d1c61ad077f27418ea8e7e88fd54bcdf98165e18be7e4681cbd5e20"
     }
   }
 }

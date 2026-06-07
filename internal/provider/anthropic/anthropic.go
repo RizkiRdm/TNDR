@@ -194,7 +194,7 @@ func (p *AnthropicProvider) Stream(ctx context.Context, req *provider.Completion
 
 			data := strings.TrimPrefix(line, "data: ")
 			var event struct {
-				Type string `json:"type"`
+				Type    string `json:"type"`
 				Message struct {
 					ID string `json:"id"`
 				} `json:"message"`

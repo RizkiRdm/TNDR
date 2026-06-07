@@ -1,0 +1,11 @@
+# CocoIndex Code (ccc)
+/.cocoindex_code/
+.gemini
+
+go.mod
+go.sum
+tndr
+logs
+
+graphify-out
+skills-lock.json

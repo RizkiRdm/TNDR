@@ -19,9 +19,9 @@ type Provider interface {
 }
 
 type CompletionRequest struct {
-	Model    string           `json:"model"`
-	Messages []Message        `json:"messages"`
-	Stream   bool             `json:"stream,omitempty"`
+	Model    string    `json:"model"`
+	Messages []Message `json:"messages"`
+	Stream   bool      `json:"stream,omitempty"`
 }
 
 type Message struct {
@@ -30,12 +30,12 @@ type Message struct {
 }
 
 type CompletionResponse struct {
-	ID      string `json:"id"`
-	Object  string `json:"object"`
-	Created int64  `json:"created"`
-	Model   string `json:"model"`
+	ID      string   `json:"id"`
+	Object  string   `json:"object"`
+	Created int64    `json:"created"`
+	Model   string   `json:"model"`
 	Choices []Choice `json:"choices"`
-	Usage   Usage  `json:"usage"`
+	Usage   Usage    `json:"usage"`
 }
 
 type Choice struct {
@@ -51,10 +51,10 @@ type Usage struct {
 }
 
 type StreamResponse struct {
-	ID      string `json:"id"`
-	Object  string `json:"object"`
-	Created int64  `json:"created"`
-	Model   string `json:"model"`
+	ID      string         `json:"id"`
+	Object  string         `json:"object"`
+	Created int64          `json:"created"`
+	Model   string         `json:"model"`
 	Choices []StreamChoice `json:"choices"`
 }
 

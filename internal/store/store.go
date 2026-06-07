@@ -1,0 +1,120 @@
+package store
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+
+	_ "modernc.org/sqlite"
+)
+
+type Store struct {
+	db *sql.DB
+}
+
+type RequestRecord struct {
+	ID               string
+	Model            string
+	Provider         string
+	PromptTokens     int
+	CompletionTokens int
+	TotalTokens      int
+	Cost             float64
+	PricingSource    string
+	CreatedAt        string
+}
+
+func (s *Store) RecordRequest(ctx context.Context, r *RequestRecord) error {
+	query := `INSERT INTO requests (id, model, provider, prompt_tokens, completion_tokens, total_tokens, cost, pricing_source, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := s.db.ExecContext(ctx, query, r.ID, r.Model, r.Provider, r.PromptTokens, r.CompletionTokens, r.TotalTokens, r.Cost, r.PricingSource, r.CreatedAt)
+	return err
+}
+
+func New(dbPath string) (*Store, error) {
+	dir := filepath.Dir(dbPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, fmt.Errorf("mkdir: %w", err)
+	}
+
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("open db: %w", err)
+	}
+
+	if err := runMigrations(db); err != nil {
+		return nil, fmt.Errorf("migrate: %w", err)
+	}
+
+	return &Store{db: db}, nil
+}
+
+func runMigrations(db *sql.DB) error {
+	migration, err := os.ReadFile("internal/store/migrations/001_init.sql")
+	if err != nil {
+		return fmt.Errorf("read migration: %w", err)
+	}
+
+	_, err = db.Exec(string(migration))
+	return err
+}
+
+func (s *Store) Close() error {
+	return s.db.Close()
+}
+
+type CostSummary struct {
+	Today    float64
+	Week     float64
+	Month    float64
+	AllTime  float64
+}
+
+func (s *Store) GetCostSummary(ctx context.Context, provider string) (*CostSummary, error) {
+	summary := &CostSummary{}
+
+	providerFilter := ""
+	args := []interface{}{}
+	if provider != "" {
+		providerFilter = " AND provider = ?"
+		args = append(args, provider)
+	}
+
+	// Today
+	query := fmt.Sprintf("SELECT COALESCE(SUM(cost), 0) FROM requests WHERE created_at >= ? %s", providerFilter)
+	today := time.Now().Truncate(24 * time.Hour).Format(time.RFC3339)
+	err := s.db.QueryRowContext(ctx, query, append([]interface{}{today}, args...)...).Scan(&summary.Today)
+	if err != nil {
+		return nil, err
+	}
+
+	// Week (last 7 days)
+	week := time.Now().AddDate(0, 0, -7).Format(time.RFC3339)
+	err = s.db.QueryRowContext(ctx, query, append([]interface{}{week}, args...)...).Scan(&summary.Week)
+	if err != nil {
+		return nil, err
+	}
+
+	// Month (last 30 days)
+	month := time.Now().AddDate(0, 0, -30).Format(time.RFC3339)
+	err = s.db.QueryRowContext(ctx, query, append([]interface{}{month}, args...)...).Scan(&summary.Month)
+	if err != nil {
+		return nil, err
+	}
+
+	// All Time
+	queryAll := "SELECT COALESCE(SUM(cost), 0) FROM requests"
+	if provider != "" {
+		queryAll += " WHERE provider = ?"
+		err = s.db.QueryRowContext(ctx, queryAll, provider).Scan(&summary.AllTime)
+	} else {
+		err = s.db.QueryRowContext(ctx, queryAll).Scan(&summary.AllTime)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return summary, nil
+}

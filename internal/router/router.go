@@ -6,15 +6,18 @@ import (
 	"time"
 
 	"github.com/RizkiRdm/TNDR/internal/config"
+	"github.com/RizkiRdm/TNDR/internal/cost"
 	"github.com/RizkiRdm/TNDR/internal/provider"
+	"github.com/rs/zerolog/log"
 )
 
 type Router struct {
 	providers map[string]provider.Provider
 	models    map[string]config.ModelAliasConfig
+	tracker   *cost.Tracker
 }
 
-func NewRouter(cfg *config.Config, providers map[string]provider.Provider) *Router {
+func NewRouter(cfg *config.Config, providers map[string]provider.Provider, tracker *cost.Tracker) *Router {
 	modelMap := make(map[string]config.ModelAliasConfig)
 	for _, m := range cfg.Models {
 		modelMap[m.Alias] = m
@@ -23,6 +26,7 @@ func NewRouter(cfg *config.Config, providers map[string]provider.Provider) *Rout
 	return &Router{
 		providers: providers,
 		models:    modelMap,
+		tracker:   tracker,
 	}
 }
 
@@ -44,7 +48,22 @@ func (r *Router) Complete(ctx context.Context, modelAlias string, req *provider.
 	}
 
 	fb := NewFallback(FallbackMode(modelCfg.FallbackMode), pList, 500*time.Millisecond)
-	return fb.Execute(ctx, req)
+	resp, err := fb.Execute(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Record cost asynchronously
+	if r.tracker != nil {
+		go func() {
+			err := r.tracker.Track(context.Background(), resp.Object, resp.Model, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
+			if err != nil {
+				log.Error().Err(err).Str("provider", resp.Object).Str("model", resp.Model).Msg("failed to track cost")
+			}
+		}()
+	}
+
+	return resp, nil
 }
 
 func (r *Router) Stream(ctx context.Context, modelAlias string, req *provider.CompletionRequest) (<-chan *provider.StreamResponse, <-chan error) {

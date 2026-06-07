@@ -1,0 +1,4 @@
+[
+  {"provider": "openai", "model": "gpt-4o", "prompt_rate": 0.005, "completion_rate": 0.015},
+  {"provider": "gemini", "model": "gemini-1.5-pro", "prompt_rate": 0.0035, "completion_rate": 0.0105}
+]

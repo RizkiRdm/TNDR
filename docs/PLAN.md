@@ -109,17 +109,17 @@ Next session starts at: Implementing Anthropic provider.
 **Shippable:** `tendr cost` shows spending breakdown.
 **Time limit:** 1 week
 
-- [ ] Implement `internal/store` — SQLite init, migrations, connection pool
-- [ ] Create migration `001_init.sql` — requests + cache_entries + pricing_snapshots tables
-- [ ] Implement `internal/cost/tracker.go` — cost calculation logic
-- [ ] Implement `internal/cost/pricing.go` — pricing resolution (override → fetched → hardcoded)
-- [ ] Implement pricing fetch from GitHub on startup
-- [ ] Bundle `pricing.json` in binary (go:embed)
-- [ ] Record cost entry per request in SQLite
-- [ ] Log `pricing_source` on every cost record
-- [ ] Implement CLI: `tendr cost` — today / week / month / all-time summary
-- [ ] Implement CLI: `tendr cost --provider openai`
-- [ ] Implement CLI: `tendr cost --json` for script-friendly output
+- [x] Implement `internal/store` — SQLite init, migrations, connection pool
+- [x] Create migration `001_init.sql` — requests + cache_entries + pricing_snapshots tables
+- [x] Implement `internal/cost/tracker.go` — cost calculation logic
+- [x] Implement `internal/cost/pricing.go` — pricing resolution (override → fetched → hardcoded)
+- [x] Implement pricing fetch from GitHub on startup
+- [x] Bundle `pricing.json` in binary (go:embed)
+- [x] Record cost entry per request in SQLite
+- [x] Log `pricing_source` on every cost record
+- [x] Implement CLI: `tendr cost` — today / week / month / all-time summary
+- [x] Implement CLI: `tendr cost --provider openai`
+- [x] Implement CLI: `tendr cost --json` for script-friendly output
 - [ ] Push to GitHub
 
 **Checkpoint:** Cost is recorded accurately. Pricing source is visible. CLI queries work.
