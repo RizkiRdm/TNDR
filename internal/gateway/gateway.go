@@ -30,7 +30,6 @@ func NewServer(port int, r *router.Router, c *cache.Exact, st *store.Store, l ma
 	mux := chi.NewRouter()
 
 	mux.Use(middleware.RequestID)
-	mux.Use(middleware.RealIP)
 	mux.Use(middleware.Logger)
 	mux.Use(middleware.Recoverer)
 

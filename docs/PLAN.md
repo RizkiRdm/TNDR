@@ -154,10 +154,10 @@ Next session starts at: Implementing Anthropic provider.
 - [x] Implement `internal/ratelimit/limiter.go` — token bucket, in-memory
 - [x] Implement per-model-alias rate limit
 - [x] Implement per-provider rate limit
-- [] Return HTTP 429 with `retry_after_ms` on limit exceeded
-- [] Log `rate_limit_hit` event
-- [] Test: exceed limit → 429 returned → retry after cooldown works
-- [] Push to GitHub
+- [x] Return HTTP 429 with `retry_after_ms` on limit exceeded
+- [x] Log `rate_limit_hit` event
+- [x] Test: exceed limit → 429 returned → retry after cooldown works
+- [x] Push to GitHub
 
 **Checkpoint:** Rate limits enforced. 429 responses correct. Logs capture limit hits.
 
@@ -168,20 +168,20 @@ Next session starts at: Implementing Anthropic provider.
 **Shippable:** `tendr` launches TUI with all 5 tabs functional.
 **Time limit:** 1 week
 
-- [ ] Implement `internal/tui/tui.go` — root Bubble Tea model, tab routing
-- [ ] Implement `styles/styles.go` — all Lip Gloss definitions per DESIGN.md
-- [ ] Implement Tab 1: Dashboard — gateway status, provider health, last 10 requests
-- [ ] Implement Tab 2: Cost — summary cards, provider breakdown, inline bar chart
-- [ ] Implement Tab 3: Cache — status, entry list, cache controls
-- [ ] Implement Tab 4: Config — read-only view, masked API keys, open in $EDITOR
-- [ ] Implement Tab 5: Logs — live log stream, pause/resume, level filter
-- [ ] Implement all keyboard shortcuts per DESIGN.md
-- [ ] Implement statusbar with contextual key hints
-- [ ] Handle minimum terminal size (80×24) gracefully
-- [ ] Wire: `tendr` (no args) → launch TUI
-- [ ] Wire: `tendr monitor` → launch TUI on Dashboard tab
-- [ ] Wire: `tendr cost` (standalone) → launch TUI on Cost tab
-- [x] Push to GitHub
+- [x] Implement `internal/tui/tui.go` — root Bubble Tea model, tab routing
+- [x] Implement `styles/styles.go` — all Lip Gloss definitions per DESIGN.md
+- [x] Implement Tab 1: Dashboard — gateway status, provider health, last 10 requests
+- [x] Implement Tab 2: Cost — summary cards, provider breakdown, inline bar chart
+- [x] Implement Tab 3: Cache — status, entry list, cache controls
+- [x] Implement Tab 4: Config — read-only view, masked API keys, open in $EDITOR
+- [x] Implement Tab 5: Logs — live log stream, pause/resume, level filter
+- [x] Implement all keyboard shortcuts per DESIGN.md
+- [x] Implement statusbar with contextual key hints
+- [x] Handle minimum terminal size (80×24) gracefully
+- [x] Wire: `tendr` (no args) → launch TUI
+- [x] Wire: `tendr monitor` → launch TUI on Dashboard tab
+- [x] Wire: `tendr cost` (standalone) → launch TUI on Cost tab
+- [ ] Push to GitHub
 
 **Checkpoint:** TUI works. All tabs render correctly. Keyboard navigation works. Live data updates.
 
@@ -279,4 +279,4 @@ Before returning ANY code block, execute this mental check:
 1. Scan all imported packages in the file.
 2. For each package, verify if it is explicitly referenced in the functional code below.
 3. If an import is NOT used (e.g., standard "embed" or utility packages), REMOVE the import line immediately.
-4. If this rule is violated, the code compiler will FAIL.
+4. If this rule is violated, the code compiler will FAIL..

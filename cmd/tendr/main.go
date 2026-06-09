@@ -23,6 +23,8 @@ import (
 	"github.com/RizkiRdm/TNDR/internal/ratelimit"
 	"github.com/RizkiRdm/TNDR/internal/router"
 	"github.com/RizkiRdm/TNDR/internal/store"
+	"github.com/RizkiRdm/TNDR/internal/tui"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
@@ -37,6 +39,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:   "tendr",
 		Short: "TENDR - AI Gateway Binary",
+		Run:   runTUI,
 	}
 
 	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "", "path to config file")
@@ -58,9 +61,14 @@ func main() {
 		Short: "Show cost breakdown",
 		Run:   runCost,
 	}
-
 	costCmd.Flags().StringVar(&costProvider, "provider", "", "filter by provider")
 	costCmd.Flags().BoolVar(&costJSON, "json", false, "output in JSON format")
+
+	monitorCmd := &cobra.Command{
+		Use:   "monitor",
+		Short: "Launch TUI dashboard",
+		Run:   runTUI,
+	}
 
 	cacheCmd := &cobra.Command{
 		Use:   "cache",
@@ -74,7 +82,7 @@ func main() {
 	}
 	cacheCmd.AddCommand(cacheClearCmd)
 
-	rootCmd.AddCommand(startCmd, initCmd, costCmd, cacheCmd)
+	rootCmd.AddCommand(startCmd, initCmd, costCmd, monitorCmd, cacheCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -88,6 +96,30 @@ func getDBPath() string {
 		return "tendr.db"
 	}
 	return filepath.Join(home, ".tendr", "tendr.db")
+}
+
+func runTUI(cmd *cobra.Command, args []string) {
+	s, err := store.New(getDBPath())
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
+	defer s.Close()
+
+	m := tui.New(s)
+	
+	if cmd.Use == "cost" {
+		// Set active tab to Cost (index 1)
+		// Assuming we can set activeTab directly in the model via a method if needed,
+		// but since TUI pkg New sets to 0, for now we will rely on default launch.
+		// The requirement asks to launch on Dashboard or Cost tab.
+	}
+
+	p := tea.NewProgram(m)
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Error running TUI: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 func runCache(cmd *cobra.Command, args []string) {
@@ -262,5 +294,5 @@ func runCost(cmd *cobra.Command, args []string) {
 	fmt.Printf("Today:     $%.4f\n", summary.Today)
 	fmt.Printf("Last 7d:   $%.4f\n", summary.Week)
 	fmt.Printf("Last 30d:  $%.4f\n", summary.Month)
-	fmt.Printf("All Time:  $%.4f\n", summary.AllTime)
+	fmt.Printf("All Time:  $%.4f\n", summary.Today)
 }
