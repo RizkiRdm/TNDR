@@ -181,7 +181,7 @@ Next session starts at: Implementing Anthropic provider.
 - [x] Wire: `tendr` (no args) → launch TUI
 - [x] Wire: `tendr monitor` → launch TUI on Dashboard tab
 - [x] Wire: `tendr cost` (standalone) → launch TUI on Cost tab
-- [ ] Push to GitHub
+- [x] Push to GitHub
 
 **Checkpoint:** TUI works. All tabs render correctly. Keyboard navigation works. Live data updates.
 

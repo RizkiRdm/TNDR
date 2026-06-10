@@ -1,0 +1,118 @@
+package provider
+
+import (
+	"bufio"
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strings"
+)
+
+// BaseClient menyediakan fungsionalitas umum untuk semua provider AI.
+type BaseClient struct {
+	HTTPClient *http.Client
+}
+
+// NewBaseClient membuat instance BaseClient baru.
+func NewBaseClient() *BaseClient {
+	return &BaseClient{
+		HTTPClient: &http.Client{},
+	}
+}
+
+// DoRequest mengirimkan request POST JSON dan mendecode response-nya.
+func (c *BaseClient) DoRequest(ctx context.Context, url string, headers map[string]string, body interface{}, target interface{}) error {
+	jsonData, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("provider: marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("provider: create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return ErrProviderDown
+	}
+	defer resp.Body.Close()
+
+	if err := MapHTTPError(resp.StatusCode); err != nil {
+		return err
+	}
+
+	if target == nil {
+		return nil
+	}
+
+	return json.NewDecoder(resp.Body).Decode(target)
+}
+
+// StreamSSE menangani streaming Server-Sent Events (SSE).
+func (c *BaseClient) StreamSSE(ctx context.Context, url string, headers map[string]string, body interface{}, handler func(data []byte) error) error {
+	jsonData, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("provider: marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("provider: create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return ErrProviderDown
+	}
+	defer resp.Body.Close()
+
+	if err := MapHTTPError(resp.StatusCode); err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+
+		data := strings.TrimPrefix(line, "data: ")
+		if data == "[DONE]" {
+			break
+		}
+
+		if err := handler([]byte(data)); err != nil {
+			return err
+		}
+	}
+
+	return scanner.Err()
+}
+
+// MapHTTPError memetakan status code HTTP ke error provider yang terstandarisasi.
+func MapHTTPError(statusCode int) error {
+	switch statusCode {
+	case http.StatusOK:
+		return nil
+	case http.StatusUnauthorized, http.StatusForbidden:
+		return ErrInvalidKey
+	case http.StatusTooManyRequests:
+		return ErrRateLimit
+	default:
+		return fmt.Errorf("provider error: status %d", statusCode)
+	}
+}

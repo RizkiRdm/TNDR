@@ -1,13 +1,9 @@
 package gemini
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"strings"
 	"time"
 
 	"github.com/RizkiRdm/TNDR/internal/provider"
@@ -15,13 +11,13 @@ import (
 
 type GeminiProvider struct {
 	apiKey string
-	client *http.Client
+	base   *provider.BaseClient
 }
 
 func NewGeminiProvider(apiKey string) *GeminiProvider {
 	return &GeminiProvider{
 		apiKey: apiKey,
-		client: &http.Client{},
+		base:   provider.NewBaseClient(),
 	}
 }
 
@@ -51,7 +47,6 @@ type geminiResponse struct {
 			Role string `json:"role"`
 		} `json:"content"`
 		FinishReason string `json:"finishReason"`
-		Index        int    `json:"index"`
 	} `json:"candidates"`
 	UsageMetadata struct {
 		PromptTokenCount     int `json:"promptTokenCount"`
@@ -63,61 +58,11 @@ type geminiResponse struct {
 func (p *GeminiProvider) Complete(ctx context.Context, req *provider.CompletionRequest) (*provider.CompletionResponse, error) {
 	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", req.Model, p.apiKey)
 
-	var contents []geminiContent
-	for _, msg := range req.Messages {
-		role := msg.Role
-		if role == "assistant" {
-			role = "model"
-		}
-		if role == "system" {
-			role = "user"
-		}
-
-		contents = append(contents, geminiContent{
-			Role: role,
-			Parts: []geminiPart{
-				{Text: msg.Content},
-			},
-		})
-	}
-
-	gemReq := geminiRequest{
-		Contents: contents,
-	}
-
-	jsonData, err := json.Marshal(gemReq)
-	if err != nil {
-		return nil, fmt.Errorf("gemini: marshal request: %w", err)
-	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, fmt.Errorf("gemini: create request: %w", err)
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	resp, err := p.client.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("gemini: %w", provider.ErrProviderDown)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusBadRequest {
-		return nil, provider.ErrInvalidKey
-	}
-	if resp.StatusCode == http.StatusTooManyRequests {
-		return nil, provider.ErrRateLimit
-	}
-	if resp.StatusCode != http.StatusOK {
-		var errData interface{}
-		json.NewDecoder(resp.Body).Decode(&errData)
-		return nil, fmt.Errorf("gemini: provider error (status %d): %v", resp.StatusCode, errData)
-	}
+	gemReq := geminiRequest{Contents: mapMessages(req.Messages)}
 
 	var gemResp geminiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&gemResp); err != nil {
-		return nil, fmt.Errorf("gemini: decode response: %w", err)
+	if err := p.base.DoRequest(ctx, url, nil, gemReq, &gemResp); err != nil {
+		return nil, err
 	}
 
 	if len(gemResp.Candidates) == 0 {
@@ -135,14 +80,13 @@ func (p *GeminiProvider) Complete(ctx context.Context, req *provider.CompletionR
 		role = "assistant"
 	}
 
-	normalized := &provider.CompletionResponse{
+	return &provider.CompletionResponse{
 		ID:      fmt.Sprintf("gemini-%d", time.Now().UnixNano()),
 		Object:  "chat.completion",
 		Created: time.Now().Unix(),
 		Model:   req.Model,
 		Choices: []provider.Choice{
 			{
-				Index: 0,
 				Message: provider.Message{
 					Role:    role,
 					Content: content,
@@ -155,9 +99,7 @@ func (p *GeminiProvider) Complete(ctx context.Context, req *provider.CompletionR
 			CompletionTokens: gemResp.UsageMetadata.CandidatesTokenCount,
 			TotalTokens:      gemResp.UsageMetadata.TotalTokenCount,
 		},
-	}
-
-	return normalized, nil
+	}, nil
 }
 
 func (p *GeminiProvider) Stream(ctx context.Context, req *provider.CompletionRequest) (<-chan *provider.StreamResponse, <-chan error) {
@@ -165,71 +107,16 @@ func (p *GeminiProvider) Stream(ctx context.Context, req *provider.CompletionReq
 	errChan := make(chan error, 1)
 
 	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:streamGenerateContent?alt=sse&key=%s", req.Model, p.apiKey)
-
-	var contents []geminiContent
-	for _, msg := range req.Messages {
-		role := msg.Role
-		if role == "assistant" {
-			role = "model"
-		}
-		if role == "system" {
-			role = "user"
-		}
-		contents = append(contents, geminiContent{
-			Role: role,
-			Parts: []geminiPart{
-				{Text: msg.Content},
-			},
-		})
-	}
-
-	gemReq := geminiRequest{
-		Contents: contents,
-	}
-
-	jsonData, err := json.Marshal(gemReq)
-	if err != nil {
-		errChan <- fmt.Errorf("gemini: marshal request: %w", err)
-		close(respChan)
-		return respChan, errChan
-	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		errChan <- fmt.Errorf("gemini: create request: %w", err)
-		close(respChan)
-		return respChan, errChan
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
+	gemReq := geminiRequest{Contents: mapMessages(req.Messages)}
 
 	go func() {
 		defer close(respChan)
 		defer close(errChan)
 
-		resp, err := p.client.Do(httpReq)
-		if err != nil {
-			errChan <- provider.ErrProviderDown
-			return
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			errChan <- fmt.Errorf("gemini stream error: status %d", resp.StatusCode)
-			return
-		}
-
-		scanner := bufio.NewScanner(resp.Body)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if !strings.HasPrefix(line, "data: ") {
-				continue
-			}
-
-			data := strings.TrimPrefix(line, "data: ")
+		err := p.base.StreamSSE(ctx, url, nil, gemReq, func(data []byte) error {
 			var gemResp geminiResponse
-			if err := json.Unmarshal([]byte(data), &gemResp); err != nil {
-				continue
+			if err := json.Unmarshal(data, &gemResp); err != nil {
+				return nil
 			}
 
 			if len(gemResp.Candidates) > 0 {
@@ -242,7 +129,6 @@ func (p *GeminiProvider) Stream(ctx context.Context, req *provider.CompletionReq
 						Model:   req.Model,
 						Choices: []provider.StreamChoice{
 							{
-								Index: 0,
 								Delta: provider.MessageDelta{
 									Content: candidate.Content.Parts[0].Text,
 								},
@@ -252,14 +138,33 @@ func (p *GeminiProvider) Stream(ctx context.Context, req *provider.CompletionReq
 					}
 				}
 			}
-		}
+			return nil
+		})
 
-		if err := scanner.Err(); err != nil {
-			errChan <- fmt.Errorf("scanner error: %w", err)
+		if err != nil {
+			errChan <- err
 		}
 	}()
 
 	return respChan, errChan
+}
+
+func mapMessages(msgs []provider.Message) []geminiContent {
+	var contents []geminiContent
+	for _, msg := range msgs {
+		role := msg.Role
+		if role == "assistant" {
+			role = "model"
+		}
+		if role == "system" {
+			role = "user"
+		}
+		contents = append(contents, geminiContent{
+			Role:  role,
+			Parts: []geminiPart{{Text: msg.Content}},
+		})
+	}
+	return contents
 }
 
 func mapFinishReason(reason string) string {
@@ -268,8 +173,6 @@ func mapFinishReason(reason string) string {
 		return "stop"
 	case "MAX_TOKENS":
 		return "length"
-	case "SAFETY":
-		return "content_filter"
 	default:
 		return reason
 	}

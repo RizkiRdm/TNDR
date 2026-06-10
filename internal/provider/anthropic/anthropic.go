@@ -1,13 +1,8 @@
 package anthropic
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"net/http"
-	"strings"
 	"time"
 
 	"github.com/RizkiRdm/TNDR/internal/provider"
@@ -15,13 +10,13 @@ import (
 
 type AnthropicProvider struct {
 	apiKey string
-	client *http.Client
+	base   *provider.BaseClient
 }
 
 func NewAnthropicProvider(apiKey string) *AnthropicProvider {
 	return &AnthropicProvider{
 		apiKey: apiKey,
-		client: &http.Client{},
+		base:   provider.NewBaseClient(),
 	}
 }
 
@@ -38,16 +33,13 @@ type anthropicRequest struct {
 
 type anthropicResponse struct {
 	ID      string `json:"id"`
-	Type    string `json:"type"`
 	Role    string `json:"role"`
 	Content []struct {
-		Type string `json:"type"`
 		Text string `json:"text"`
 	} `json:"content"`
-	Model        string `json:"model"`
-	StopReason   string `json:"stop_reason"`
-	StopSequence string `json:"stop_sequence"`
-	Usage        struct {
+	Model      string `json:"model"`
+	StopReason string `json:"stop_reason"`
+	Usage      struct {
 		InputTokens  int `json:"input_tokens"`
 		OutputTokens int `json:"output_tokens"`
 	} `json:"usage"`
@@ -55,6 +47,10 @@ type anthropicResponse struct {
 
 func (p *AnthropicProvider) Complete(ctx context.Context, req *provider.CompletionRequest) (*provider.CompletionResponse, error) {
 	url := "https://api.anthropic.com/v1/messages"
+	headers := map[string]string{
+		"x-api-key":         p.apiKey,
+		"anthropic-version": "2023-06-01",
+	}
 
 	anthroReq := anthropicRequest{
 		Model:     req.Model,
@@ -62,41 +58,9 @@ func (p *AnthropicProvider) Complete(ctx context.Context, req *provider.Completi
 		MaxTokens: 4096,
 	}
 
-	jsonData, err := json.Marshal(anthroReq)
-	if err != nil {
-		return nil, fmt.Errorf("anthropic: marshal request: %w", err)
-	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, fmt.Errorf("anthropic: create request: %w", err)
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-api-key", p.apiKey)
-	httpReq.Header.Set("anthropic-version", "2023-06-01")
-
-	resp, err := p.client.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("anthropic: %w", provider.ErrProviderDown)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return nil, provider.ErrInvalidKey
-	}
-	if resp.StatusCode == http.StatusTooManyRequests {
-		return nil, provider.ErrRateLimit
-	}
-	if resp.StatusCode != http.StatusOK {
-		var errData interface{}
-		json.NewDecoder(resp.Body).Decode(&errData)
-		return nil, fmt.Errorf("anthropic: provider error (status %d): %v", resp.StatusCode, errData)
-	}
-
 	var anthroResp anthropicResponse
-	if err := json.NewDecoder(resp.Body).Decode(&anthroResp); err != nil {
-		return nil, fmt.Errorf("anthropic: decode response: %w", err)
+	if err := p.base.DoRequest(ctx, url, headers, anthroReq, &anthroResp); err != nil {
+		return nil, err
 	}
 
 	content := ""
@@ -104,14 +68,13 @@ func (p *AnthropicProvider) Complete(ctx context.Context, req *provider.Completi
 		content = anthroResp.Content[0].Text
 	}
 
-	normalized := &provider.CompletionResponse{
+	return &provider.CompletionResponse{
 		ID:      anthroResp.ID,
 		Object:  "chat.completion",
 		Created: time.Now().Unix(),
 		Model:   anthroResp.Model,
 		Choices: []provider.Choice{
 			{
-				Index: 0,
 				Message: provider.Message{
 					Role:    anthroResp.Role,
 					Content: content,
@@ -124,16 +87,13 @@ func (p *AnthropicProvider) Complete(ctx context.Context, req *provider.Completi
 			CompletionTokens: anthroResp.Usage.OutputTokens,
 			TotalTokens:      anthroResp.Usage.InputTokens + anthroResp.Usage.OutputTokens,
 		},
-	}
-
-	return normalized, nil
+	}, nil
 }
 
 func (p *AnthropicProvider) Stream(ctx context.Context, req *provider.CompletionRequest) (<-chan *provider.StreamResponse, <-chan error) {
 	respChan := make(chan *provider.StreamResponse)
 	errChan := make(chan error, 1)
 
-	url := "https://api.anthropic.com/v1/messages"
 	anthroReq := anthropicRequest{
 		Model:     req.Model,
 		Messages:  req.Messages,
@@ -141,58 +101,18 @@ func (p *AnthropicProvider) Stream(ctx context.Context, req *provider.Completion
 		Stream:    true,
 	}
 
-	jsonData, err := json.Marshal(anthroReq)
-	if err != nil {
-		errChan <- fmt.Errorf("anthropic: marshal request: %w", err)
-		close(respChan)
-		return respChan, errChan
+	url := "https://api.anthropic.com/v1/messages"
+	headers := map[string]string{
+		"x-api-key":         p.apiKey,
+		"anthropic-version": "2023-06-01",
 	}
-
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		errChan <- fmt.Errorf("anthropic: create request: %w", err)
-		close(respChan)
-		return respChan, errChan
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-api-key", p.apiKey)
-	httpReq.Header.Set("anthropic-version", "2023-06-01")
 
 	go func() {
 		defer close(respChan)
 		defer close(errChan)
 
-		resp, err := p.client.Do(httpReq)
-		if err != nil {
-			errChan <- provider.ErrProviderDown
-			return
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			errChan <- fmt.Errorf("anthropic stream error: status %d", resp.StatusCode)
-			return
-		}
-
-		scanner := bufio.NewScanner(resp.Body)
 		var lastID string
-		for scanner.Scan() {
-			line := scanner.Text()
-			if line == "" {
-				continue
-			}
-
-			if strings.HasPrefix(line, "event: ") {
-				// Handle specific events if needed
-				continue
-			}
-
-			if !strings.HasPrefix(line, "data: ") {
-				continue
-			}
-
-			data := strings.TrimPrefix(line, "data: ")
+		err := p.base.StreamSSE(ctx, url, headers, anthroReq, func(data []byte) error {
 			var event struct {
 				Type    string `json:"type"`
 				Message struct {
@@ -203,8 +123,8 @@ func (p *AnthropicProvider) Stream(ctx context.Context, req *provider.Completion
 				} `json:"delta"`
 			}
 
-			if err := json.Unmarshal([]byte(data), &event); err != nil {
-				continue
+			if err := json.Unmarshal(data, &event); err != nil {
+				return nil // skip malformed
 			}
 
 			if event.Type == "message_start" {
@@ -219,7 +139,6 @@ func (p *AnthropicProvider) Stream(ctx context.Context, req *provider.Completion
 					Model:   req.Model,
 					Choices: []provider.StreamChoice{
 						{
-							Index: 0,
 							Delta: provider.MessageDelta{
 								Content: event.Delta.Text,
 							},
@@ -227,14 +146,11 @@ func (p *AnthropicProvider) Stream(ctx context.Context, req *provider.Completion
 					},
 				}
 			}
+			return nil
+		})
 
-			if event.Type == "message_stop" {
-				break
-			}
-		}
-
-		if err := scanner.Err(); err != nil {
-			errChan <- fmt.Errorf("scanner error: %w", err)
+		if err != nil {
+			errChan <- err
 		}
 	}()
 
@@ -247,8 +163,6 @@ func mapStopReason(reason string) string {
 		return "stop"
 	case "max_tokens":
 		return "length"
-	case "stop_sequence":
-		return "stop"
 	default:
 		return reason
 	}

@@ -1,5 +1,6 @@
 # CocoIndex Code (ccc)
 /.cocoindex_code/
+.codegraph
 .gemini
 
 go.mod
