@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,6 +11,9 @@ import (
 
 	_ "modernc.org/sqlite"
 )
+
+//go:embed migrations/001_init.sql
+var migrationSQL string
 
 type Store struct {
 	db *sql.DB
@@ -76,12 +80,7 @@ func New(dbPath string) (*Store, error) {
 }
 
 func runMigrations(db *sql.DB) error {
-	migration, err := os.ReadFile("internal/store/migrations/001_init.sql")
-	if err != nil {
-		return fmt.Errorf("read migration: %w", err)
-	}
-
-	_, err = db.Exec(string(migration))
+	_, err := db.Exec(migrationSQL)
 	return err
 }
 

@@ -81,10 +81,11 @@ func (p *GeminiProvider) Complete(ctx context.Context, req *provider.CompletionR
 	}
 
 	return &provider.CompletionResponse{
-		ID:      fmt.Sprintf("gemini-%d", time.Now().UnixNano()),
-		Object:  "chat.completion",
-		Created: time.Now().Unix(),
-		Model:   req.Model,
+		ID:       fmt.Sprintf("gemini-%d", time.Now().UnixNano()),
+		Object:   "chat.completion",
+		Provider: p.Name(),
+		Created:  time.Now().Unix(),
+		Model:    req.Model,
 		Choices: []provider.Choice{
 			{
 				Message: provider.Message{
@@ -99,8 +100,7 @@ func (p *GeminiProvider) Complete(ctx context.Context, req *provider.CompletionR
 			CompletionTokens: gemResp.UsageMetadata.CandidatesTokenCount,
 			TotalTokens:      gemResp.UsageMetadata.TotalTokenCount,
 		},
-	}, nil
-}
+	}, nil}
 
 func (p *GeminiProvider) Stream(ctx context.Context, req *provider.CompletionRequest) (<-chan *provider.StreamResponse, <-chan error) {
 	respChan := make(chan *provider.StreamResponse)

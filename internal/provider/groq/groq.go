@@ -33,6 +33,7 @@ func (p *GroqProvider) Complete(ctx context.Context, req *provider.CompletionReq
 		return nil, err
 	}
 
+	result.Provider = p.Name()
 	return &result, nil
 }
 

@@ -33,6 +33,7 @@ func (p *OpenAIProvider) Complete(ctx context.Context, req *provider.CompletionR
 		return nil, err
 	}
 
+	result.Provider = p.Name()
 	return &result, nil
 }
 

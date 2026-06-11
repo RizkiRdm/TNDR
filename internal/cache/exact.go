@@ -15,15 +15,17 @@ type Entry struct {
 }
 
 type Exact struct {
-	mu    sync.RWMutex
-	items map[string]Entry
-	ttl   time.Duration
+	mu       sync.RWMutex
+	items    map[string]Entry
+	ttl      time.Duration
+	maxItems int
 }
 
 func NewExact(ttl time.Duration) *Exact {
 	return &Exact{
-		items: make(map[string]Entry),
-		ttl:   ttl,
+		items:    make(map[string]Entry),
+		ttl:      ttl,
+		maxItems: 1000,
 	}
 }
 
@@ -56,8 +58,30 @@ func (c *Exact) Set(key, value string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	// Kalau sudah penuh, hapus expired entries dulu
+	if len(c.items) >= c.maxItems {
+		c.evictExpired()
+	}
+
+	// Kalau masih penuh setelah evict, hapus random entry
+	if len(c.items) >= c.maxItems {
+		for k := range c.items {
+			delete(c.items, k)
+			break
+		}
+	}
+
 	c.items[key] = Entry{
 		Value:     value,
 		CreatedAt: time.Now(),
+	}
+}
+
+// evictExpired harus dipanggil saat lock sudah dipegang
+func (c *Exact) evictExpired() {
+	for k, v := range c.items {
+		if time.Since(v.CreatedAt) > c.ttl {
+			delete(c.items, k)
+		}
 	}
 }

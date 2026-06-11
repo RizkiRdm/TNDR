@@ -69,10 +69,11 @@ func (p *AnthropicProvider) Complete(ctx context.Context, req *provider.Completi
 	}
 
 	return &provider.CompletionResponse{
-		ID:      anthroResp.ID,
-		Object:  "chat.completion",
-		Created: time.Now().Unix(),
-		Model:   anthroResp.Model,
+		ID:       anthroResp.ID,
+		Object:   "chat.completion",
+		Provider: p.Name(),
+		Created:  time.Now().Unix(),
+		Model:    anthroResp.Model,
 		Choices: []provider.Choice{
 			{
 				Message: provider.Message{
@@ -87,8 +88,7 @@ func (p *AnthropicProvider) Complete(ctx context.Context, req *provider.Completi
 			CompletionTokens: anthroResp.Usage.OutputTokens,
 			TotalTokens:      anthroResp.Usage.InputTokens + anthroResp.Usage.OutputTokens,
 		},
-	}, nil
-}
+	}, nil}
 
 func (p *AnthropicProvider) Stream(ctx context.Context, req *provider.CompletionRequest) (<-chan *provider.StreamResponse, <-chan error) {
 	respChan := make(chan *provider.StreamResponse)

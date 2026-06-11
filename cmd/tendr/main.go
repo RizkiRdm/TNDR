@@ -294,5 +294,5 @@ func runCost(cmd *cobra.Command, args []string) {
 	fmt.Printf("Today:     $%.4f\n", summary.Today)
 	fmt.Printf("Last 7d:   $%.4f\n", summary.Week)
 	fmt.Printf("Last 30d:  $%.4f\n", summary.Month)
-	fmt.Printf("All Time:  $%.4f\n", summary.Today)
+	fmt.Printf("All Time:  $%.4f\n", summary.AllTime)
 }

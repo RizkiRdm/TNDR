@@ -61,13 +61,12 @@ func (r *Router) Complete(ctx context.Context, modelAlias string, req *provider.
 	// Record cost asynchronously
 	if r.tracker != nil {
 		go func() {
-			err := r.tracker.Track(context.Background(), resp.Object, resp.Model, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
+			err := r.tracker.Track(context.Background(), resp.Provider, resp.Model, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
 			if err != nil {
-				log.Error().Err(err).Str("provider", resp.Object).Str("model", resp.Model).Msg("failed to track cost")
+				log.Error().Err(err).Str("provider", resp.Provider).Str("model", resp.Model).Msg("failed to track cost")
 			}
 		}()
 	}
-
 	return resp, nil
 }
 

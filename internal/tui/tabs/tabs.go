@@ -90,13 +90,20 @@ func ConfigView(s *store.Store) string {
 	lines := strings.Split(string(content), "\n")
 	for i, line := range lines {
 		if strings.Contains(line, "api_key:") {
-			parts := strings.Split(line, ":")
-			if len(parts) == 2 {
-				key := strings.TrimSpace(parts[1])
-				if len(key) > 6 {
-					lines[i] = fmt.Sprintf("%s: %s••••••••", parts[0], key[:6])
-				}
+			// Ambil semua karakter setelah "api_key:" pertama
+			colonIdx := strings.Index(line, "api_key:")
+			prefix := line[:colonIdx+8] // "  api_key:"
+			rawValue := strings.TrimSpace(line[colonIdx+8:])
+
+			// Hapus quote kalau ada
+			rawValue = strings.Trim(rawValue, `"'`)
+
+			if len(rawValue) > 6 {
+				lines[i] = prefix + " " + rawValue[:6] + "••••••••"
+			} else if len(rawValue) > 0 {
+				lines[i] = prefix + " ••••••••"
 			}
+			// Kalau kosong (belum diisi), biarkan apa adanya
 		}
 	}
 
