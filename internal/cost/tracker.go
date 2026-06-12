@@ -14,10 +14,12 @@ type Tracker struct {
 	pricing *PricingManager
 }
 
+// NewTracker creates a new tracker to monitor request costs using the provided store and pricing manager.
 func NewTracker(s *store.Store, pm *PricingManager) *Tracker {
 	return &Tracker{store: s, pricing: pm}
 }
 
+// Track calculates and records the cost of a request based on prompt and completion token usage.
 func (t *Tracker) Track(ctx context.Context, provider, model string, prompt, completion int) error {
 	rate, source := t.pricing.GetRate(provider, model)
 	if source == "unknown" {

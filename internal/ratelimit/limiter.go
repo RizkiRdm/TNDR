@@ -13,6 +13,8 @@ type Limiter struct {
 	last   time.Time
 }
 
+// NewLimiter creates a token bucket rate limiter.
+// rate is tokens added per second, burst is the maximum token bucket size.
 func NewLimiter(rate, burst float64) *Limiter {
 	return &Limiter{
 		tokens: burst,
@@ -22,6 +24,7 @@ func NewLimiter(rate, burst float64) *Limiter {
 	}
 }
 
+// Allow reports whether an action can be performed now.
 func (l *Limiter) Allow() bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()

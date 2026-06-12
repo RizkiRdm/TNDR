@@ -43,6 +43,28 @@ func (s *Store) RecordCacheHit(ctx context.Context, key string) error {
 	return err
 }
 
+// GetRecentRequests returns last N requests ordered by created_at desc
+func (s *Store) GetRecentRequests(ctx context.Context, limit int) ([]RequestRecord, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT id, model, provider, prompt_tokens, completion_tokens, total_tokens, cost, pricing_source, created_at
+         FROM requests ORDER BY created_at DESC LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var records []RequestRecord
+	for rows.Next() {
+		var r RequestRecord
+		if err := rows.Scan(&r.ID, &r.Model, &r.Provider, &r.PromptTokens,
+			&r.CompletionTokens, &r.TotalTokens, &r.Cost, &r.PricingSource, &r.CreatedAt); err != nil {
+			continue
+		}
+		records = append(records, r)
+	}
+	return records, rows.Err()
+}
+
 func (s *Store) GetCacheStats(ctx context.Context) (int, int, error) {
 	var totalRequests, cacheHits int
 	err := s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM requests").Scan(&totalRequests)

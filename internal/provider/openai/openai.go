@@ -7,14 +7,16 @@ import (
 )
 
 type OpenAIProvider struct {
-	apiKey string
-	base   *provider.BaseClient
+	apiKey  string
+	baseURL string
+	base    *provider.BaseClient
 }
 
 func NewOpenAIProvider(apiKey string) *OpenAIProvider {
 	return &OpenAIProvider{
-		apiKey: apiKey,
-		base:   provider.NewBaseClient(),
+		apiKey:  apiKey,
+		baseURL: "https://api.openai.com/v1",
+		base:    provider.NewBaseClient(),
 	}
 }
 
@@ -23,7 +25,7 @@ func (p *OpenAIProvider) Name() string {
 }
 
 func (p *OpenAIProvider) Complete(ctx context.Context, req *provider.CompletionRequest) (*provider.CompletionResponse, error) {
-	url := "https://api.openai.com/v1/chat/completions"
+	url := p.baseURL + "/chat/completions"
 	headers := map[string]string{
 		"Authorization": "Bearer " + p.apiKey,
 	}
@@ -42,7 +44,7 @@ func (p *OpenAIProvider) Stream(ctx context.Context, req *provider.CompletionReq
 	errChan := make(chan error, 1)
 
 	req.Stream = true
-	url := "https://api.openai.com/v1/chat/completions"
+	url := p.baseURL + "/chat/completions"
 	headers := map[string]string{
 		"Authorization": "Bearer " + p.apiKey,
 	}
@@ -67,3 +69,4 @@ func (p *OpenAIProvider) Stream(ctx context.Context, req *provider.CompletionReq
 
 	return respChan, errChan
 }
+

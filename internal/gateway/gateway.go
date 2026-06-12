@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/RizkiRdm/TNDR/internal/cache"
+	"github.com/RizkiRdm/TNDR/internal/config"
 	"github.com/RizkiRdm/TNDR/internal/provider"
 	"github.com/RizkiRdm/TNDR/internal/ratelimit"
 	"github.com/RizkiRdm/TNDR/internal/router"
@@ -24,14 +25,16 @@ type Server struct {
 	cache      *cache.Exact
 	store      *store.Store
 	limiters   map[string]*ratelimit.Limiter
+	config     *config.ServerConfig
 }
 
-func NewServer(port int, r *router.Router, c *cache.Exact, st *store.Store, l map[string]*ratelimit.Limiter) *Server {
+func NewServer(port int, r *router.Router, c *cache.Exact, st *store.Store, l map[string]*ratelimit.Limiter, cfg *config.ServerConfig) *Server {
 	mux := chi.NewRouter()
 
 	mux.Use(middleware.RequestID)
 	mux.Use(middleware.Logger)
 	mux.Use(middleware.Recoverer)
+	mux.Use(GlobalKeyMiddleware(cfg))
 
 	s := &Server{
 		router:   mux,
@@ -39,6 +42,7 @@ func NewServer(port int, r *router.Router, c *cache.Exact, st *store.Store, l ma
 		cache:    c,
 		store:    st,
 		limiters: l,
+		config:   cfg,
 		httpServer: &http.Server{
 			Addr:    fmt.Sprintf(":%d", port),
 			Handler: mux,

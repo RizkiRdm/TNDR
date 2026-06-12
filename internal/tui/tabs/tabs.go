@@ -13,24 +13,31 @@ import (
 )
 
 func DashboardView(s *store.Store) string {
+	ctx := context.Background()
+	totalReqs, _, err := s.GetCacheStats(ctx)
+	if err != nil {
+		totalReqs = 0
+	}
+
+	requests, _ := s.GetRecentRequests(ctx, 10)
+
 	var sb strings.Builder
 	sb.WriteString("┌─ GATEWAY STATUS ──────────────────────────────────────────────┐\n")
-	sb.WriteString("│  Status    ● RUNNING       Port    4821                       │\n")
-	sb.WriteString("│  Uptime    " + time.Since(time.Now().Add(-2*time.Hour)).Truncate(time.Minute).String() + "          Requests  1,847 total              │\n")
-	sb.WriteString("└───────────────────────────────────────────────────────────────┘\n\n")
-
-	sb.WriteString("┌─ PROVIDER HEALTH ─────────────────────────────────────────────┐\n")
-	sb.WriteString("│  OpenAI      ● ok    142ms avg    2,341 req    $0.0421        │\n")
-	sb.WriteString("│  Anthropic   ● ok    891ms avg      412 req    $0.0211        │\n")
-	sb.WriteString("│  Gemini      ● ok     88ms avg      103 req    $0.0012        │\n")
-	sb.WriteString("│  Groq        ✗ down    —             —           —            │\n")
+	sb.WriteString(fmt.Sprintf("│  Status    ● RUNNING       Port    4821                       │\n"))
+	sb.WriteString(fmt.Sprintf("│  Uptime    %s          Requests  %d total              │\n", time.Since(time.Now().Add(-2*time.Hour)).Truncate(time.Minute).String(), totalReqs))
 	sb.WriteString("└───────────────────────────────────────────────────────────────┘\n\n")
 
 	sb.WriteString("┌─ LAST 10 REQUESTS ────────────────────────────────────────────┐\n")
 	sb.WriteString("│  TIME        MODEL         PROVIDER    TOKENS   COST    STATUS│\n")
-	sb.WriteString("│  11:42:01    coding        openai       1,204   $0.0021  ✓    │\n")
-	sb.WriteString("│  11:41:58    fast          groq           341   $0.0002  ✗ fb │\n")
-	sb.WriteString("│  11:41:44    default       anthropic      892   $0.0091  ✓    │\n")
+	for _, r := range requests {
+		// Parse time if needed, assuming CreatedAt is RFC3339 string
+		t, _ := time.Parse(time.RFC3339, r.CreatedAt)
+		sb.WriteString(fmt.Sprintf("│  %-10s  %-12s  %-9s  %6d   $%7.4f  ✓    │\n",
+			t.Format("15:04:05"), r.Model, r.Provider, r.TotalTokens, r.Cost))
+	}
+	for i := len(requests); i < 10; i++ {
+		sb.WriteString("│  " + strings.Repeat(" ", 62) + "│\n")
+	}
 	sb.WriteString("└───────────────────────────────────────────────────────────────┘\n")
 
 	return sb.String()

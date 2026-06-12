@@ -9,14 +9,16 @@ import (
 )
 
 type AnthropicProvider struct {
-	apiKey string
-	base   *provider.BaseClient
+	apiKey  string
+	baseURL string
+	base    *provider.BaseClient
 }
 
 func NewAnthropicProvider(apiKey string) *AnthropicProvider {
 	return &AnthropicProvider{
-		apiKey: apiKey,
-		base:   provider.NewBaseClient(),
+		apiKey:  apiKey,
+		baseURL: "https://api.anthropic.com/v1",
+		base:    provider.NewBaseClient(),
 	}
 }
 
@@ -46,7 +48,7 @@ type anthropicResponse struct {
 }
 
 func (p *AnthropicProvider) Complete(ctx context.Context, req *provider.CompletionRequest) (*provider.CompletionResponse, error) {
-	url := "https://api.anthropic.com/v1/messages"
+	url := p.baseURL + "/messages"
 	headers := map[string]string{
 		"x-api-key":         p.apiKey,
 		"anthropic-version": "2023-06-01",
@@ -101,7 +103,7 @@ func (p *AnthropicProvider) Stream(ctx context.Context, req *provider.Completion
 		Stream:    true,
 	}
 
-	url := "https://api.anthropic.com/v1/messages"
+	url := p.baseURL + "/messages"
 	headers := map[string]string{
 		"x-api-key":         p.apiKey,
 		"anthropic-version": "2023-06-01",

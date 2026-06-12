@@ -7,14 +7,16 @@ import (
 )
 
 type GroqProvider struct {
-	apiKey string
-	base   *provider.BaseClient
+	apiKey  string
+	baseURL string
+	base    *provider.BaseClient
 }
 
 func NewGroqProvider(apiKey string) *GroqProvider {
 	return &GroqProvider{
-		apiKey: apiKey,
-		base:   provider.NewBaseClient(),
+		apiKey:  apiKey,
+		baseURL: "https://api.groq.com/openai/v1",
+		base:    provider.NewBaseClient(),
 	}
 }
 
@@ -23,7 +25,7 @@ func (p *GroqProvider) Name() string {
 }
 
 func (p *GroqProvider) Complete(ctx context.Context, req *provider.CompletionRequest) (*provider.CompletionResponse, error) {
-	url := "https://api.groq.com/openai/v1/chat/completions"
+	url := p.baseURL + "/chat/completions"
 	headers := map[string]string{
 		"Authorization": "Bearer " + p.apiKey,
 	}
@@ -42,7 +44,7 @@ func (p *GroqProvider) Stream(ctx context.Context, req *provider.CompletionReque
 	errChan := make(chan error, 1)
 
 	req.Stream = true
-	url := "https://api.groq.com/openai/v1/chat/completions"
+	url := p.baseURL + "/chat/completions"
 	headers := map[string]string{
 		"Authorization": "Bearer " + p.apiKey,
 	}

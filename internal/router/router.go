@@ -71,7 +71,6 @@ func (r *Router) Complete(ctx context.Context, modelAlias string, req *provider.
 }
 
 func (r *Router) Stream(ctx context.Context, modelAlias string, req *provider.CompletionRequest) (<-chan *provider.StreamResponse, <-chan error) {
-	// Stream fallback not yet implemented
 	modelCfg, ok := r.models[modelAlias]
 	if !ok {
 		errChan := make(chan error, 1)
@@ -81,15 +80,19 @@ func (r *Router) Stream(ctx context.Context, modelAlias string, req *provider.Co
 		return respChan, errChan
 	}
 
-	providerName := modelCfg.Providers[0]
-	p, ok := r.providers[providerName]
-	if !ok {
-		errChan := make(chan error, 1)
-		errChan <- fmt.Errorf("provider not found: %s", providerName)
-		respChan := make(chan *provider.StreamResponse)
-		close(respChan)
-		return respChan, errChan
+	// Try providers in order
+	for _, name := range modelCfg.Providers {
+		p, ok := r.providers[name]
+		if !ok {
+			continue
+		}
+		// Stream from first available provider
+		return p.Stream(ctx, req)
 	}
 
-	return p.Stream(ctx, req)
+	errChan := make(chan error, 1)
+	errChan <- fmt.Errorf("router: no providers available for alias: %s", modelAlias)
+	respChan := make(chan *provider.StreamResponse)
+	close(respChan)
+	return respChan, errChan
 }

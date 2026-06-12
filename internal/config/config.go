@@ -13,8 +13,9 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port     int    `mapstructure:"port"`
-	LogLevel string `mapstructure:"log_level"`
+	Port      int    `mapstructure:"port"`
+	LogLevel  string `mapstructure:"log_level"`
+	GlobalKey string `mapstructure:"global_key"`
 }
 
 type ProvidersConfig struct {
@@ -67,8 +68,21 @@ func Load(configPath string) (*Config, error) {
 }
 
 func validate(cfg *Config) error {
-	if cfg.Server.Port <= 0 {
-		return fmt.Errorf("invalid server port")
+	if cfg.Server.Port <= 0 || cfg.Server.Port > 65535 {
+		return fmt.Errorf("validate: invalid server port: %d", cfg.Server.Port)
+	}
+
+	validFallbackModes := map[string]bool{"reliable": true, "fast": true, "smart": true}
+	for _, m := range cfg.Models {
+		if m.Alias == "" {
+			return fmt.Errorf("validate: model alias cannot be empty")
+		}
+		if len(m.Providers) == 0 {
+			return fmt.Errorf("validate: model %q has no providers", m.Alias)
+		}
+		if m.FallbackMode != "" && !validFallbackModes[m.FallbackMode] {
+			return fmt.Errorf("validate: model %q has invalid fallback_mode: %q (must be reliable|fast|smart)", m.Alias, m.FallbackMode)
+		}
 	}
 	return nil
 }

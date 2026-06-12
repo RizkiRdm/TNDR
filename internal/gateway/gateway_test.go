@@ -24,7 +24,7 @@ func TestRateLimit(t *testing.T) {
 		"test-model": ratelimit.NewLimiter(0.1, 1), // 0.1 rps, 1 burst
 	}
 	r := router.NewRouter(&config.Config{}, nil, nil)
-	srv := NewServer(0, r, c, s, limiters)
+	srv := NewServer(0, r, c, s, limiters, &config.ServerConfig{Port: 0, LogLevel: "debug"})
 
 	// Trigger limit
 	reqBody, _ := json.Marshal(provider.CompletionRequest{Model: "test-model"})

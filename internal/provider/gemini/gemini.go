@@ -10,14 +10,16 @@ import (
 )
 
 type GeminiProvider struct {
-	apiKey string
-	base   *provider.BaseClient
+	apiKey  string
+	baseURL string
+	base    *provider.BaseClient
 }
 
 func NewGeminiProvider(apiKey string) *GeminiProvider {
 	return &GeminiProvider{
-		apiKey: apiKey,
-		base:   provider.NewBaseClient(),
+		apiKey:  apiKey,
+		baseURL: "https://generativelanguage.googleapis.com/v1beta",
+		base:    provider.NewBaseClient(),
 	}
 }
 
@@ -56,7 +58,7 @@ type geminiResponse struct {
 }
 
 func (p *GeminiProvider) Complete(ctx context.Context, req *provider.CompletionRequest) (*provider.CompletionResponse, error) {
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", req.Model, p.apiKey)
+	url := fmt.Sprintf("%s/models/%s:generateContent?key=%s", p.baseURL, req.Model, p.apiKey)
 
 	gemReq := geminiRequest{Contents: mapMessages(req.Messages)}
 
@@ -106,7 +108,7 @@ func (p *GeminiProvider) Stream(ctx context.Context, req *provider.CompletionReq
 	respChan := make(chan *provider.StreamResponse)
 	errChan := make(chan error, 1)
 
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:streamGenerateContent?alt=sse&key=%s", req.Model, p.apiKey)
+	url := fmt.Sprintf("%s/models/%s:streamGenerateContent?alt=sse&key=%s", p.baseURL, req.Model, p.apiKey)
 	gemReq := geminiRequest{Contents: mapMessages(req.Messages)}
 
 	go func() {

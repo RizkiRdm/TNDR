@@ -18,7 +18,7 @@ type BaseClient struct {
 	HTTPClient *http.Client
 }
 
-// NewBaseClient membuat instance BaseClient baru.
+// NewBaseClient creates a new instance of BaseClient.
 func NewBaseClient() *BaseClient {
 	return &BaseClient{
 		HTTPClient: &http.Client{
@@ -27,7 +27,7 @@ func NewBaseClient() *BaseClient {
 	}
 }
 
-// DoRequest mengirimkan request POST JSON dan mendecode response-nya.
+// DoRequest sends a JSON POST request and decodes the response into the target interface.
 func (c *BaseClient) DoRequest(ctx context.Context, url string, headers map[string]string, body interface{}, target interface{}) error {
 	jsonData, err := json.Marshal(body)
 	if err != nil {
@@ -61,7 +61,7 @@ func (c *BaseClient) DoRequest(ctx context.Context, url string, headers map[stri
 	return json.NewDecoder(resp.Body).Decode(target)
 }
 
-// StreamSSE menangani streaming Server-Sent Events (SSE).
+// StreamSSE handles streaming Server-Sent Events (SSE) responses from providers.
 func (c *BaseClient) StreamSSE(ctx context.Context, url string, headers map[string]string, body interface{}, handler func(data []byte) error) error {
 	jsonData, err := json.Marshal(body)
 	if err != nil {
@@ -108,7 +108,7 @@ func (c *BaseClient) StreamSSE(ctx context.Context, url string, headers map[stri
 	return scanner.Err()
 }
 
-// MapHTTPError memetakan status code HTTP ke error provider yang terstandarisasi.
+// MapHTTPError maps HTTP status codes to standardized provider error types.
 func MapHTTPError(statusCode int) error {
 	switch statusCode {
 	case http.StatusOK:

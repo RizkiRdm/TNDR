@@ -1,15 +1,22 @@
 package cache
 
 import (
+	"encoding/json"
 	"go.etcd.io/bbolt"
 	"time"
 )
 
-type Disk struct {
-	db *bbolt.DB
+type diskEntry struct {
+	Value     string    `json:"v"`
+	CreatedAt time.Time `json:"t"`
 }
 
-func NewDisk(path string) (*Disk, error) {
+type Disk struct {
+	db  *bbolt.DB
+	ttl time.Duration
+}
+
+func NewDisk(path string, ttl time.Duration) (*Disk, error) {
 	db, err := bbolt.Open(path, 0600, &bbolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		return nil, err
@@ -18,7 +25,7 @@ func NewDisk(path string) (*Disk, error) {
 		_, err := tx.CreateBucketIfNotExists([]byte("cache"))
 		return err
 	})
-	return &Disk{db: db}, err
+	return &Disk{db: db, ttl: ttl}, err
 }
 
 func (d *Disk) Get(key string) (string, bool) {
@@ -34,15 +41,36 @@ func (d *Disk) Get(key string) (string, bool) {
 	if len(val) == 0 {
 		return "", false
 	}
-	return string(val), true
+
+	var entry diskEntry
+	if err := json.Unmarshal(val, &entry); err != nil {
+		return "", false
+	}
+
+	if d.ttl > 0 && time.Since(entry.CreatedAt) > d.ttl {
+		d.db.Update(func(tx *bbolt.Tx) error {
+			b := tx.Bucket([]byte("cache"))
+			if b != nil {
+				b.Delete([]byte(key))
+			}
+			return nil
+		})
+		return "", false
+	}
+	return entry.Value, true
 }
 
 func (d *Disk) Set(key, value string) {
+	entry := diskEntry{
+		Value:     value,
+		CreatedAt: time.Now(),
+	}
+	data, _ := json.Marshal(entry)
 	d.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte("cache"))
 		if b == nil {
 			return nil
 		}
-		return b.Put([]byte(key), []byte(value))
+		return b.Put([]byte(key), data)
 	})
 }

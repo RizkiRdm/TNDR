@@ -11,6 +11,7 @@ import (
 
 type mockProvider struct {
 	name   string
+	resp   *provider.CompletionResponse
 	err    error
 	delay  time.Duration
 }
@@ -22,6 +23,9 @@ func (m *mockProvider) Complete(ctx context.Context, req *provider.CompletionReq
 	}
 	if m.err != nil {
 		return nil, m.err
+	}
+	if m.resp != nil {
+		return m.resp, nil
 	}
 	return &provider.CompletionResponse{Model: m.name}, nil
 }

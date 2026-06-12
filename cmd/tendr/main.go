@@ -213,7 +213,7 @@ func runStart(cmd *cobra.Command, args []string) {
 	}
 
 	// Initialize server
-	server := gateway.NewServer(cfg.Server.Port, r, c, s, limiters)
+	server := gateway.NewServer(cfg.Server.Port, r, c, s, limiters, &cfg.Server)
 
 	go func() {
 		if err := server.Start(); err != nil {
