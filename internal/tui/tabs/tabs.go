@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func DashboardView(s *store.Store) string {
+func DashboardView(s *store.Store, startedAt time.Time) string {
 	ctx := context.Background()
 	totalReqs, _, err := s.GetCacheStats(ctx)
 	if err != nil {
@@ -24,7 +25,8 @@ func DashboardView(s *store.Store) string {
 	var sb strings.Builder
 	sb.WriteString("┌─ GATEWAY STATUS ──────────────────────────────────────────────┐\n")
 	sb.WriteString(fmt.Sprintf("│  Status    ● RUNNING       Port    4821                       │\n"))
-	sb.WriteString(fmt.Sprintf("│  Uptime    %s          Requests  %d total              │\n", time.Since(time.Now().Add(-2*time.Hour)).Truncate(time.Minute).String(), totalReqs))
+	sb.WriteString(fmt.Sprintf("│  Uptime    %-12s   Requests  %d total              │\n",
+		time.Since(startedAt).Truncate(time.Second).String(), totalReqs))
 	sb.WriteString("└───────────────────────────────────────────────────────────────┘\n\n")
 
 	sb.WriteString("┌─ LAST 10 REQUESTS ────────────────────────────────────────────┐\n")
@@ -49,6 +51,17 @@ func CostView(s *store.Store) string {
 		return fmt.Sprintf("Error loading cost: %v", err)
 	}
 
+	byProvider, err := s.GetCostByProvider(context.Background())
+	if err != nil {
+		byProvider = map[string]float64{}
+	}
+
+	// Calculate total for percentage
+	totalCost := 0.0
+	for _, v := range byProvider {
+		totalCost += v
+	}
+
 	var sb strings.Builder
 	sb.WriteString("┌─ COST SUMMARY ────────────────────────────────────────────────┐\n")
 	sb.WriteString(fmt.Sprintf("│  Today         $%8.6f     This Week    $%8.6f             │\n", summary.Today, summary.Week))
@@ -56,9 +69,21 @@ func CostView(s *store.Store) string {
 	sb.WriteString("└───────────────────────────────────────────────────────────────┘\n\n")
 
 	sb.WriteString("┌─ BY PROVIDER ─────────────────────────────────────────────────┐\n")
-	sb.WriteString("│  OpenAI        $0.0282   ████████████░░░░  67%               │\n")
-	sb.WriteString("│  Anthropic     $0.0112   █████░░░░░░░░░░░  27%               │\n")
-	sb.WriteString("│  Gemini        $0.0027   █░░░░░░░░░░░░░░░   6%               │\n")
+	providers := []string{"openai", "anthropic", "gemini", "groq"}
+	for _, p := range providers {
+		cost := byProvider[p]
+		pct := 0.0
+		if totalCost > 0 {
+			pct = cost / totalCost * 100
+		}
+		filled := int(pct / 100 * 16)
+		if filled > 16 {
+			filled = 16
+		}
+		bar := strings.Repeat("█", filled) + strings.Repeat("░", 16-filled)
+		sb.WriteString(fmt.Sprintf("│  %-12s $%-7.4f   %s  %3.0f%%               │\n",
+			p, cost, bar, pct))
+	}
 	sb.WriteString("└───────────────────────────────────────────────────────────────┘\n")
 
 	return sb.String()
@@ -137,9 +162,14 @@ func OpenConfigInEditor(cfgFile string) error {
 }
 
 func LogsView(s *store.Store) string {
-	content, err := os.ReadFile("logs/tendr.log")
+	home, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Sprintf("Error reading logs: %v", err)
+		return fmt.Sprintf("Error finding home dir: %v", err)
+	}
+	logPath := filepath.Join(home, ".tendr", "logs", "tendr.log")
+	content, err := os.ReadFile(logPath)
+	if err != nil {
+		return fmt.Sprintf("No logs found at %s\nStart the gateway with 'tendr start' to generate logs.\n", logPath)
 	}
 
 	lines := strings.Split(string(content), "\n")

@@ -33,13 +33,17 @@ var (
 	configPath   string
 	costProvider string
 	costJSON     bool
+	Version      = "0.1.0-dev"
+	Commit       = "none"
+	Date         = "unknown"
 )
 
 func main() {
 	rootCmd := &cobra.Command{
-		Use:   "tendr",
-		Short: "TENDR - AI Gateway Binary",
-		Run:   runTUI,
+		Use:     "tendr",
+		Short:   "TENDR - AI Gateway Binary",
+		Version: fmt.Sprintf("%s (commit: %s, date: %s)", Version, Commit, Date),
+		Run:     runTUI,
 	}
 
 	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "", "path to config file")
@@ -96,6 +100,16 @@ func getDBPath() string {
 		return "tendr.db"
 	}
 	return filepath.Join(home, ".tendr", "tendr.db")
+}
+
+// mustHomeDir returns user home dir or panics (only called at startup)
+func mustHomeDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "cannot determine home directory: %v\n", err)
+		os.Exit(1)
+	}
+	return home
 }
 
 func runTUI(cmd *cobra.Command, args []string) {
@@ -168,7 +182,9 @@ func runStart(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	logger.Init(cfg.Server.LogLevel, "logs")
+	// Resolve log directory to ~/.tendr/logs/
+	logDir := filepath.Join(mustHomeDir(), ".tendr", "logs")
+	logger.Init(cfg.Server.LogLevel, logDir)
 
 	// Initialize Store
 	s, err := store.New(getDBPath())
@@ -179,9 +195,6 @@ func runStart(cmd *cobra.Command, args []string) {
 
 	// Initialize Pricing and Tracker
 	pm := cost.NewPricingManager()
-	if err := pm.FetchRemote(); err != nil {
-		log.Warn().Err(err).Msg("failed to fetch remote pricing, using embedded")
-	}
 	tracker := cost.NewTracker(s, pm)
 
 	// Initialize all providers

@@ -1,11 +1,29 @@
-# CocoIndex Code (ccc)
-/.cocoindex_code/
-.codegraph
-.gemini
+# Binaries
+/tendr
+/tendr.exe
+/dist/
 
-go.mod
-go.sum
-tendr
-logs
-graphify-out
-skills-lock.json
+# Logs
+/logs/
+*.log
+
+# Tool-specific (Gemini/Codegraph/Graphify)
+/.cocoindex_code/
+/.codegraph/
+/.gemini/
+/graphify-out/
+/skills-lock.json
+
+# Tests
+/test_output.txt
+/temp_main.go
+*.test
+*.out
+/internal/store/tendr_test.db*
+
+# User config
+/config.yaml
+
+# OS specific
+.DS_Store
+.env

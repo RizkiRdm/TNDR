@@ -3,9 +3,6 @@ package cost
 import (
 	_ "embed"
 	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
 	"sync"
 )
 
@@ -41,35 +38,6 @@ func (pm *PricingManager) loadEmbedded() {
 			pm.rates[p.Provider+p.Model] = p
 		}
 	}
-}
-
-func (pm *PricingManager) FetchRemote() error {
-	resp, err := http.Get("https://raw.githubusercontent.com/tendr-ai/tendr/main/pricing.json")
-	if err != nil {
-		return fmt.Errorf("fetch pricing: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("read body: %w", err)
-	}
-
-	var data []Pricing
-	if err := json.Unmarshal(body, &data); err != nil {
-		return fmt.Errorf("unmarshal: %w", err)
-	}
-
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
-	for _, p := range data {
-		pm.rates[p.Provider+p.Model] = p
-	}
-	return nil
 }
 
 func (pm *PricingManager) GetRate(provider, model string) (Pricing, string) {

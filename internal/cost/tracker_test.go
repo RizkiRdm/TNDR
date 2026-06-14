@@ -2,7 +2,6 @@ package cost
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/RizkiRdm/TNDR/internal/store"
@@ -10,16 +9,12 @@ import (
 
 func setupTestStore(t *testing.T) *store.Store {
 	t.Helper()
-	dbPath := "/tmp/tendr_test.db"
-	_ = os.Remove(dbPath)
-	s, err := store.New(dbPath)
+	// t.TempDir() returns a unique dir per test, auto-cleaned after test
+	s, err := store.New(t.TempDir() + "/tendr_test.db")
 	if err != nil {
 		t.Fatalf("failed to create store: %v", err)
 	}
-	t.Cleanup(func() {
-		s.Close()
-		os.Remove(dbPath)
-	})
+	t.Cleanup(func() { s.Close() })
 	return s
 }
 

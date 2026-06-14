@@ -65,8 +65,9 @@ func TestStore_GetCostSummary_WithData(t *testing.T) {
 		})
 	}
 	sum, _ := s.GetCostSummary(context.Background(), "")
-	if sum.AllTime != 0.06 {
-		t.Errorf("expected 0.06, got %f", sum.AllTime)
+	const tolerance = 1e-9
+	if diff := sum.AllTime - 0.06; diff > tolerance || diff < -tolerance {
+		t.Errorf("expected ~0.06, got %f", sum.AllTime)
 	}
 }
 
@@ -122,3 +123,40 @@ func TestStore_GetRecentRequests(t *testing.T) {
 		t.Errorf("expected newest ID 14, got %s", recs[0].ID)
 	}
 }
+
+func TestStore_GetCostByProvider(t *testing.T) {
+	s := setupTestStore(t)
+
+	// Insert records for two different providers
+	_ = s.RecordRequest(context.Background(), &RequestRecord{
+		ID: "1", Provider: "openai", Cost: 0.10, CreatedAt: time.Now().Format(time.RFC3339),
+	})
+	_ = s.RecordRequest(context.Background(), &RequestRecord{
+		ID: "2", Provider: "openai", Cost: 0.05, CreatedAt: time.Now().Format(time.RFC3339),
+	})
+	_ = s.RecordRequest(context.Background(), &RequestRecord{
+		ID: "3", Provider: "anthropic", Cost: 0.20, CreatedAt: time.Now().Format(time.RFC3339),
+	})
+
+	result, err := s.GetCostByProvider(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	const tol = 1e-9
+	openaiCost := result["openai"]
+	if diff := openaiCost - 0.15; diff > tol || diff < -tol {
+		t.Errorf("expected openai cost ~0.15, got %f", openaiCost)
+	}
+
+	anthropicCost := result["anthropic"]
+	if diff := anthropicCost - 0.20; diff > tol || diff < -tol {
+		t.Errorf("expected anthropic cost ~0.20, got %f", anthropicCost)
+	}
+
+	// Provider not in DB should not exist in result map
+	if _, ok := result["gemini"]; ok {
+		t.Error("expected gemini to not be in result, got entry")
+	}
+}
+

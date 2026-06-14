@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/RizkiRdm/TNDR/internal/store"
 	"github.com/RizkiRdm/TNDR/internal/tui/styles"
@@ -17,6 +18,7 @@ type model struct {
 	store     *store.Store
 	width     int
 	height    int
+	startedAt time.Time
 }
 
 func New(s *store.Store) model {
@@ -24,6 +26,7 @@ func New(s *store.Store) model {
 		activeTab: 0,
 		tabs:      []string{"Dashboard", "Cost", "Cache", "Config", "Logs"},
 		store:     s,
+		startedAt: time.Now(),
 	}
 }
 
@@ -101,7 +104,7 @@ func (m model) View() string {
 	var content string
 	switch m.activeTab {
 	case 0:
-		content = tabs.DashboardView(m.store)
+		content = tabs.DashboardView(m.store, m.startedAt)
 	case 1:
 		content = tabs.CostView(m.store)
 	case 2:

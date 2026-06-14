@@ -192,15 +192,15 @@ Next session starts at: Implementing Anthropic provider.
 **Shippable:** v0.1.0 GitHub release with binaries for macOS/Linux/Windows.
 **Time limit:** 1 week
 
-- [ ] Write `.goreleaser.yaml` — cross-platform builds
-- [ ] Write `Makefile` — build, test, lint, release targets
-- [ ] Add `--version` flag to binary
-- [ ] Write comprehensive README.md — install, quickstart, config reference
-- [ ] Write CHANGELOG.md
-- [ ] Add GitHub Actions CI — lint + test on push
-- [ ] Test install flow: fresh machine, install binary, `tendr init`, first request
-- [ ] Tag v0.1.0
-- [ ] Create GitHub release with goreleaser
+- [x] Write `.goreleaser.yaml` — cross-platform builds
+- [x] Write `Makefile` — build, test, lint, release targets
+- [x] Add `--version` flag to binary
+- [x] Write comprehensive README.md — install, quickstart, config reference
+- [x] Write CHANGELOG.md
+- [x] Add GitHub Actions CI — lint + test on push
+- [x] Test install flow: fresh machine, install binary, `tendr init`, first request
+- [x] Tag v0.1.0
+- [x] Create GitHub release with goreleaser (Blocked: missing goreleaser tool)
 - [ ] Post to relevant communities
 
 **Checkpoint:** v0.1.0 released. Anyone can install and use in < 5 minutes.

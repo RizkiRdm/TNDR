@@ -84,9 +84,12 @@ func (s *Store) ClearCache(ctx context.Context) error {
 }
 
 func New(dbPath string) (*Store, error) {
-	dir := filepath.Dir(dbPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, fmt.Errorf("mkdir: %w", err)
+	// Handle SQLite in-memory database — no directory needed
+	if dbPath != ":memory:" {
+		dir := filepath.Dir(dbPath)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, fmt.Errorf("mkdir: %w", err)
+		}
 	}
 
 	db, err := sql.Open("sqlite", dbPath)
@@ -104,6 +107,26 @@ func New(dbPath string) (*Store, error) {
 func runMigrations(db *sql.DB) error {
 	_, err := db.Exec(migrationSQL)
 	return err
+}
+
+func (s *Store) GetCostByProvider(ctx context.Context) (map[string]float64, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT provider, COALESCE(SUM(cost), 0) FROM requests GROUP BY provider`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	result := make(map[string]float64)
+	for rows.Next() {
+		var prov string
+		var total float64
+		if err := rows.Scan(&prov, &total); err != nil {
+			continue
+		}
+		result[prov] = total
+	}
+	return result, rows.Err()
 }
 
 func (s *Store) Close() error {
