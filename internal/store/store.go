@@ -26,14 +26,16 @@ type RequestRecord struct {
 	PromptTokens     int
 	CompletionTokens int
 	TotalTokens      int
+	PromptRate       float64
+	CompletionRate   float64
 	Cost             float64
 	PricingSource    string
 	CreatedAt        string
 }
 
 func (s *Store) RecordRequest(ctx context.Context, r *RequestRecord) error {
-	query := `INSERT INTO requests (id, model, provider, prompt_tokens, completion_tokens, total_tokens, cost, pricing_source, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err := s.db.ExecContext(ctx, query, r.ID, r.Model, r.Provider, r.PromptTokens, r.CompletionTokens, r.TotalTokens, r.Cost, r.PricingSource, r.CreatedAt)
+	query := `INSERT INTO requests (id, model, provider, prompt_tokens, completion_tokens, total_tokens, prompt_rate, completion_rate, cost, pricing_source, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err := s.db.ExecContext(ctx, query, r.ID, r.Model, r.Provider, r.PromptTokens, r.CompletionTokens, r.TotalTokens, r.PromptRate, r.CompletionRate, r.Cost, r.PricingSource, r.CreatedAt)
 	return err
 }
 
@@ -46,7 +48,7 @@ func (s *Store) RecordCacheHit(ctx context.Context, key string) error {
 // GetRecentRequests returns last N requests ordered by created_at desc
 func (s *Store) GetRecentRequests(ctx context.Context, limit int) ([]RequestRecord, error) {
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT id, model, provider, prompt_tokens, completion_tokens, total_tokens, cost, pricing_source, created_at
+		`SELECT id, model, provider, prompt_tokens, completion_tokens, total_tokens, prompt_rate, completion_rate, cost, pricing_source, created_at
          FROM requests ORDER BY created_at DESC LIMIT ?`, limit)
 	if err != nil {
 		return nil, err
@@ -57,7 +59,7 @@ func (s *Store) GetRecentRequests(ctx context.Context, limit int) ([]RequestReco
 	for rows.Next() {
 		var r RequestRecord
 		if err := rows.Scan(&r.ID, &r.Model, &r.Provider, &r.PromptTokens,
-			&r.CompletionTokens, &r.TotalTokens, &r.Cost, &r.PricingSource, &r.CreatedAt); err != nil {
+			&r.CompletionTokens, &r.TotalTokens, &r.PromptRate, &r.CompletionRate, &r.Cost, &r.PricingSource, &r.CreatedAt); err != nil {
 			continue
 		}
 		records = append(records, r)

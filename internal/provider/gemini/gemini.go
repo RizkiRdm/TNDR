@@ -153,6 +153,15 @@ func (p *GeminiProvider) Stream(ctx context.Context, req *provider.CompletionReq
 	return respChan, errChan
 }
 
+func (p *GeminiProvider) Validate(ctx context.Context) error {
+	url := fmt.Sprintf("%s/models?key=%s", p.baseURL, p.apiKey)
+	return p.base.DoRequest(ctx, url, nil, nil, nil)
+}
+
+func (p *GeminiProvider) Health(ctx context.Context) error {
+	return p.Validate(ctx)
+}
+
 func mapMessages(msgs []provider.Message) []geminiContent {
 	var contents []geminiContent
 	for _, msg := range msgs {

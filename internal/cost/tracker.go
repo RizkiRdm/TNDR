@@ -41,6 +41,8 @@ func (t *Tracker) Track(ctx context.Context, provider, model string, prompt, com
 		PromptTokens:     prompt,
 		CompletionTokens: completion,
 		TotalTokens:      prompt + completion,
+		PromptRate:       rate.Prompt,
+		CompletionRate:   rate.Completion,
 		Cost:             cost,
 		PricingSource:    source,
 		CreatedAt:        time.Now().Format(time.RFC3339),

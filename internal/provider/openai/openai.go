@@ -70,3 +70,15 @@ func (p *OpenAIProvider) Stream(ctx context.Context, req *provider.CompletionReq
 	return respChan, errChan
 }
 
+func (p *OpenAIProvider) Validate(ctx context.Context) error {
+	url := p.baseURL + "/models"
+	headers := map[string]string{
+		"Authorization": "Bearer " + p.apiKey,
+	}
+	return p.base.DoRequest(ctx, url, headers, nil, nil)
+}
+
+func (p *OpenAIProvider) Health(ctx context.Context) error {
+	return p.Validate(ctx)
+}
+

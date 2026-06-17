@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func DashboardView(s *store.Store, startedAt time.Time) string {
+func DashboardView(s *store.Store, startedAt time.Time, port string, status string) string {
 	ctx := context.Background()
 	totalReqs, _, err := s.GetCacheStats(ctx)
 	if err != nil {
@@ -24,21 +24,20 @@ func DashboardView(s *store.Store, startedAt time.Time) string {
 
 	var sb strings.Builder
 	sb.WriteString("┌─ GATEWAY STATUS ──────────────────────────────────────────────┐\n")
-	sb.WriteString(fmt.Sprintf("│  Status    ● RUNNING       Port    4821                       │\n"))
-	sb.WriteString(fmt.Sprintf("│  Uptime    %-12s   Requests  %d total              │\n",
+	sb.WriteString(fmt.Sprintf("│  Status    ● %-10s  Port    %-10s             │\n", status, port))
+	sb.WriteString(fmt.Sprintf("│  Uptime    %-12s   Requests  %-10d            │\n",
 		time.Since(startedAt).Truncate(time.Second).String(), totalReqs))
 	sb.WriteString("└───────────────────────────────────────────────────────────────┘\n\n")
 
 	sb.WriteString("┌─ LAST 10 REQUESTS ────────────────────────────────────────────┐\n")
-	sb.WriteString("│  TIME        MODEL         PROVIDER    TOKENS   COST    STATUS│\n")
+	sb.WriteString(fmt.Sprintf("│  %-8s  %-10s  %-8s  %-6s  %-6s  %-6s │\n", "TIME", "MODEL", "PROVIDER", "TOKENS", "COST", "STATUS"))
 	for _, r := range requests {
-		// Parse time if needed, assuming CreatedAt is RFC3339 string
 		t, _ := time.Parse(time.RFC3339, r.CreatedAt)
-		sb.WriteString(fmt.Sprintf("│  %-10s  %-12s  %-9s  %6d   $%7.4f  ✓    │\n",
-			t.Format("15:04:05"), r.Model, r.Provider, r.TotalTokens, r.Cost))
+		sb.WriteString(fmt.Sprintf("│  %-8s  %-10s  %-8s  %-6d  $%6.2f  %-6s │\n",
+			t.Format("15:04:05"), r.Model, r.Provider, r.TotalTokens, r.Cost, "✓"))
 	}
 	for i := len(requests); i < 10; i++ {
-		sb.WriteString("│  " + strings.Repeat(" ", 62) + "│\n")
+		sb.WriteString("│  " + strings.Repeat(" ", 60) + " │\n")
 	}
 	sb.WriteString("└───────────────────────────────────────────────────────────────┘\n")
 

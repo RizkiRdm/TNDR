@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS requests (
     prompt_tokens INTEGER NOT NULL,
     completion_tokens INTEGER NOT NULL,
     total_tokens INTEGER NOT NULL,
+    prompt_rate REAL DEFAULT 0.0,
+    completion_rate REAL DEFAULT 0.0,
     cost REAL NOT NULL,
     pricing_source TEXT NOT NULL,
     created_at TEXT NOT NULL

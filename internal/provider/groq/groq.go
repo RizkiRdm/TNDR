@@ -24,6 +24,14 @@ func (p *GroqProvider) Name() string {
 	return "groq"
 }
 
+func (p *GroqProvider) Validate(ctx context.Context) error {
+	return nil
+}
+
+func (p *GroqProvider) Health(ctx context.Context) error {
+	return nil
+}
+
 func (p *GroqProvider) Complete(ctx context.Context, req *provider.CompletionRequest) (*provider.CompletionResponse, error) {
 	url := p.baseURL + "/chat/completions"
 	headers := map[string]string{

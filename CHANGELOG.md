@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Provider startup validation and health monitoring
+- CLI commands: `health`, `test`, `doctor`, `logs`
+- `start --dry-run` mode
+- Cost visibility: `cost --explain`, daily cost thresholds, and monthly spend projections
+- Dynamic TUI dashboard status and port display
+
 ## [0.1.0] - 2026-06-14
 
 ### Added

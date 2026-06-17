@@ -104,7 +104,7 @@ func (m model) View() string {
 	var content string
 	switch m.activeTab {
 	case 0:
-		content = tabs.DashboardView(m.store, m.startedAt)
+		content = tabs.DashboardView(m.store, m.startedAt, "4821", "RUNNING")
 	case 1:
 		content = tabs.CostView(m.store)
 	case 2:

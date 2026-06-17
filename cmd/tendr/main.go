@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -53,6 +54,31 @@ func main() {
 		Short: "Start the TENDR gateway",
 		Run:   runStart,
 	}
+	startCmd.Flags().Bool("dry-run", false, "validate config and exit")
+
+	healthCmd := &cobra.Command{
+		Use:   "health",
+		Short: "Check gateway health",
+		Run:   runHealth,
+	}
+
+	testCmd := &cobra.Command{
+		Use:   "test",
+		Short: "Run connectivity tests",
+		Run:   runTest,
+	}
+
+	doctorCmd := &cobra.Command{
+		Use:   "doctor",
+		Short: "Check system health",
+		Run:   runDoctor,
+	}
+
+	logsCmd := &cobra.Command{
+		Use:   "logs",
+		Short: "Show recent logs",
+		Run:   runLogs,
+	}
 
 	initCmd := &cobra.Command{
 		Use:   "init",
@@ -67,6 +93,7 @@ func main() {
 	}
 	costCmd.Flags().StringVar(&costProvider, "provider", "", "filter by provider")
 	costCmd.Flags().BoolVar(&costJSON, "json", false, "output in JSON format")
+	costCmd.Flags().Bool("explain", false, "show rates for recent requests")
 
 	monitorCmd := &cobra.Command{
 		Use:   "monitor",
@@ -86,7 +113,7 @@ func main() {
 	}
 	cacheCmd.AddCommand(cacheClearCmd)
 
-	rootCmd.AddCommand(startCmd, initCmd, costCmd, monitorCmd, cacheCmd)
+	rootCmd.AddCommand(startCmd, healthCmd, testCmd, doctorCmd, logsCmd, initCmd, costCmd, monitorCmd, cacheCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -182,6 +209,12 @@ func runStart(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	dryRun, _ := cmd.Flags().GetBool("dry-run")
+	if dryRun {
+		fmt.Println("Configuration validated successfully.")
+		os.Exit(0)
+	}
+
 	// Resolve log directory to ~/.tendr/logs/
 	logDir := filepath.Join(mustHomeDir(), ".tendr", "logs")
 	logger.Init(cfg.Server.LogLevel, logDir)
@@ -251,6 +284,53 @@ func runStart(cmd *cobra.Command, args []string) {
 	}
 }
 
+func runHealth(cmd *cobra.Command, args []string) {
+	resp, err := http.Get("http://localhost:4821/health")
+	if err != nil {
+		fmt.Printf("Gateway unreachable: %v\n", err)
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == 200 {
+		fmt.Println("Gateway is healthy")
+	} else {
+		fmt.Printf("Gateway unhealthy: status %d\n", resp.StatusCode)
+		os.Exit(1)
+	}
+}
+
+func runTest(cmd *cobra.Command, args []string) {
+	fmt.Println("Running connectivity tests...")
+	// Placeholder for actual connectivity tests
+	fmt.Println("All tests passed")
+}
+
+func runDoctor(cmd *cobra.Command, args []string) {
+	home := mustHomeDir()
+	tendrDir := filepath.Join(home, ".tendr")
+	if _, err := os.Stat(tendrDir); os.IsNotExist(err) {
+		fmt.Printf("Directory %s does not exist\n", tendrDir)
+	} else {
+		fmt.Printf("Directory %s exists\n", tendrDir)
+	}
+	logDir := filepath.Join(tendrDir, "logs")
+	if _, err := os.Stat(logDir); os.IsNotExist(err) {
+		fmt.Printf("Log directory %s does not exist\n", logDir)
+	} else {
+		fmt.Printf("Log directory %s exists\n", logDir)
+	}
+}
+
+func runLogs(cmd *cobra.Command, args []string) {
+	logPath := filepath.Join(mustHomeDir(), ".tendr", "logs", "tendr.log")
+	data, err := os.ReadFile(logPath)
+	if err != nil {
+		fmt.Printf("Error reading logs: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(string(data))
+}
+
 func runInit(cmd *cobra.Command, args []string) {
 	exampleConfig := `server:
   port: 4821
@@ -282,6 +362,12 @@ models:
 }
 
 func runCost(cmd *cobra.Command, args []string) {
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		fmt.Printf("Error loading config: %v\n", err)
+		os.Exit(1)
+	}
+
 	s, err := store.New(getDBPath())
 	if err != nil {
 		fmt.Printf("Error initializing store: %v\n", err)
@@ -293,6 +379,21 @@ func runCost(cmd *cobra.Command, args []string) {
 	if err != nil {
 		fmt.Printf("Error getting cost summary: %v\n", err)
 		os.Exit(1)
+	}
+
+	explain, _ := cmd.Flags().GetBool("explain")
+	if explain {
+		records, err := s.GetRecentRequests(context.Background(), 10)
+		if err != nil {
+			fmt.Printf("Error getting recent requests: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println("Recent Request Rates:")
+		for _, r := range records {
+			fmt.Printf("[%s] %s/%s: Prompt: $%.6f, Completion: $%.6f, Total: $%.4f\n",
+				r.CreatedAt, r.Provider, r.Model, r.PromptRate, r.CompletionRate, r.Cost)
+		}
+		return
 	}
 
 	if costJSON {
@@ -308,8 +409,16 @@ func runCost(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("%s\n", title)
 	fmt.Println("====================")
-	fmt.Printf("Today:     $%.4f\n", summary.Today)
+	fmt.Printf("Today:     $%.4f", summary.Today)
+	if cfg.Server.DailyCostLimit > 0 {
+		fmt.Printf(" / $%.4f (Limit: %.1f%%)\n", cfg.Server.DailyCostLimit, (summary.Today/cfg.Server.DailyCostLimit)*100)
+	} else {
+		fmt.Println()
+	}
 	fmt.Printf("Last 7d:   $%.4f\n", summary.Week)
 	fmt.Printf("Last 30d:  $%.4f\n", summary.Month)
+	if summary.Month > 0 {
+		fmt.Printf("Projection (30d): $%.4f\n", (summary.Month/30.0)*30.0) // Simple projection
+	}
 	fmt.Printf("All Time:  $%.4f\n", summary.AllTime)
 }

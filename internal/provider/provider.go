@@ -16,6 +16,8 @@ type Provider interface {
 	Name() string
 	Complete(ctx context.Context, req *CompletionRequest) (*CompletionResponse, error)
 	Stream(ctx context.Context, req *CompletionRequest) (<-chan *StreamResponse, <-chan error)
+	Validate(ctx context.Context) error
+	Health(ctx context.Context) error
 }
 
 type CompletionRequest struct {

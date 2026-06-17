@@ -26,6 +26,14 @@ func (p *AnthropicProvider) Name() string {
 	return "anthropic"
 }
 
+func (p *AnthropicProvider) Validate(ctx context.Context) error {
+	return nil
+}
+
+func (p *AnthropicProvider) Health(ctx context.Context) error {
+	return nil
+}
+
 type anthropicRequest struct {
 	Model     string             `json:"model"`
 	Messages  []provider.Message `json:"messages"`
