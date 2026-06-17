@@ -1,4 +1,8 @@
 [
-  {"provider": "openai", "model": "gpt-4o", "prompt_rate": 0.005, "completion_rate": 0.015},
-  {"provider": "gemini", "model": "gemini-1.5-pro", "prompt_rate": 0.0035, "completion_rate": 0.0105}
+  {"provider": "openai", "model": "gpt-4o", "prompt_rate": 2.50, "completion_rate": 10.00},
+  {"provider": "openai", "model": "gpt-4o-mini", "prompt_rate": 0.15, "completion_rate": 0.60},
+  {"provider": "anthropic", "model": "claude-3-5-sonnet-20240620", "prompt_rate": 3.00, "completion_rate": 15.00},
+  {"provider": "anthropic", "model": "claude-3-opus-20240229", "prompt_rate": 15.00, "completion_rate": 75.00},
+  {"provider": "gemini", "model": "gemini-1.5-pro", "prompt_rate": 3.50, "completion_rate": 10.50},
+  {"provider": "gemini", "model": "gemini-1.5-flash", "prompt_rate": 0.075, "completion_rate": 0.30}
 ]

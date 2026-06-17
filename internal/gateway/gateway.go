@@ -61,9 +61,12 @@ func (s *Server) setupRoutes() {
 }
 
 func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
+	// Limit request body size to 1MB
+	r.Body = http.MaxBytesReader(w, r.Body, 1024*1024)
+
 	var req provider.CompletionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		http.Error(w, "invalid request body or body too large", http.StatusBadRequest)
 		return
 	}
 
@@ -118,10 +121,14 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 	resp, err := s.gwRouter.Complete(r.Context(), req.Model, &req)
 	if err != nil {
 		log.Error().Err(err).Str("model", req.Model).Msg("routing failed")
-		http.Error(w, fmt.Sprintf("gateway error: %v", err), http.StatusBadGateway)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadGateway)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "provider_unavailable",
+			"message": "The requested AI provider is currently unavailable or returned an error.",
+		})
 		return
 	}
-
 	if err == nil {
 		b, err := json.Marshal(resp)
 		if err == nil {

@@ -58,12 +58,13 @@ type geminiResponse struct {
 }
 
 func (p *GeminiProvider) Complete(ctx context.Context, req *provider.CompletionRequest) (*provider.CompletionResponse, error) {
-	url := fmt.Sprintf("%s/models/%s:generateContent?key=%s", p.baseURL, req.Model, p.apiKey)
+	url := fmt.Sprintf("%s/models/%s:generateContent", p.baseURL, req.Model)
+	headers := map[string]string{"x-goog-api-key": p.apiKey}
 
 	gemReq := geminiRequest{Contents: mapMessages(req.Messages)}
 
 	var gemResp geminiResponse
-	if err := p.base.DoRequest(ctx, url, nil, gemReq, &gemResp); err != nil {
+	if err := p.base.DoRequest(ctx, url, headers, gemReq, &gemResp); err != nil {
 		return nil, err
 	}
 
@@ -108,14 +109,15 @@ func (p *GeminiProvider) Stream(ctx context.Context, req *provider.CompletionReq
 	respChan := make(chan *provider.StreamResponse)
 	errChan := make(chan error, 1)
 
-	url := fmt.Sprintf("%s/models/%s:streamGenerateContent?alt=sse&key=%s", p.baseURL, req.Model, p.apiKey)
+	url := fmt.Sprintf("%s/models/%s:streamGenerateContent?alt=sse", p.baseURL, req.Model)
+	headers := map[string]string{"x-goog-api-key": p.apiKey}
 	gemReq := geminiRequest{Contents: mapMessages(req.Messages)}
 
 	go func() {
 		defer close(respChan)
 		defer close(errChan)
 
-		err := p.base.StreamSSE(ctx, url, nil, gemReq, func(data []byte) error {
+		err := p.base.StreamSSE(ctx, url, headers, gemReq, func(data []byte) error {
 			var gemResp geminiResponse
 			if err := json.Unmarshal(data, &gemResp); err != nil {
 				return nil

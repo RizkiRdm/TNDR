@@ -26,7 +26,7 @@ func (t *Tracker) Track(ctx context.Context, provider, model string, prompt, com
 		return fmt.Errorf("no pricing found for %s/%s", provider, model)
 	}
 
-	cost := (float64(prompt) * rate.Prompt) + (float64(completion) * rate.Completion)
+	cost := ((float64(prompt) * rate.Prompt) + (float64(completion) * rate.Completion)) / 1000000.0
 
 	return t.store.RecordRequest(ctx, &store.RequestRecord{
 		ID:               uuid.New().String(),

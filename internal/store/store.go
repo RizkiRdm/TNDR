@@ -97,6 +97,15 @@ func New(dbPath string) (*Store, error) {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
 
+	// SQLite tuning
+	db.SetMaxOpenConns(1)
+	if _, err := db.Exec("PRAGMA journal_mode=WAL;"); err != nil {
+		return nil, fmt.Errorf("enable WAL mode: %w", err)
+	}
+	if _, err := db.Exec("PRAGMA busy_timeout=5000;"); err != nil {
+		return nil, fmt.Errorf("set busy timeout: %w", err)
+	}
+
 	if err := runMigrations(db); err != nil {
 		return nil, fmt.Errorf("migrate: %w", err)
 	}
