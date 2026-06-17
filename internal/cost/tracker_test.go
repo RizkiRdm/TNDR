@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/RizkiRdm/TNDR/internal/config"
 	"github.com/RizkiRdm/TNDR/internal/store"
 )
 
@@ -29,7 +30,7 @@ func TestTracker_Track_Success(t *testing.T) {
 		Prompt:     0.005,
 		Completion: 0.015,
 	}
-	tr := NewTracker(s, pm)
+	tr := NewTracker(s, pm, &config.ServerConfig{})
 
 	ctx := context.Background()
 	err := tr.Track(ctx, "openai", "gpt-4o", 1000, 500)
@@ -50,7 +51,7 @@ func TestTracker_Track_Success(t *testing.T) {
 func TestTracker_Track_UnknownModel(t *testing.T) {
 	s := setupTestStore(t)
 	pm := NewPricingManager()
-	tr := NewTracker(s, pm)
+	tr := NewTracker(s, pm, &config.ServerConfig{})
 
 	ctx := context.Background()
 	err := tr.Track(ctx, "openai", "gpt-unknown", 1000, 500)

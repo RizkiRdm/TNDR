@@ -58,6 +58,13 @@ func (s *Server) setupRoutes() {
 	s.router.Route("/v1", func(r chi.Router) {
 		r.Post("/chat/completions", s.handleChatCompletions)
 	})
+	s.router.Get("/health", s.handleHealth)
+}
+
+func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {

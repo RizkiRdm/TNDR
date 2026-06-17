@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/RizkiRdm/TNDR/internal/config"
 	"github.com/RizkiRdm/TNDR/internal/store"
 	"github.com/google/uuid"
 )
@@ -12,11 +13,16 @@ import (
 type Tracker struct {
 	store   *store.Store
 	pricing *PricingManager
+	cfg     *config.ServerConfig
 }
 
 // NewTracker creates a new tracker to monitor request costs using the provided store and pricing manager.
-func NewTracker(s *store.Store, pm *PricingManager) *Tracker {
-	return &Tracker{store: s, pricing: pm}
+func NewTracker(s *store.Store, pm *PricingManager, cfg *config.ServerConfig) *Tracker {
+	return &Tracker{store: s, pricing: pm, cfg: cfg}
+}
+
+func (t *Tracker) Config() *config.ServerConfig {
+	return t.cfg
 }
 
 // Track calculates and records the cost of a request based on prompt and completion token usage.

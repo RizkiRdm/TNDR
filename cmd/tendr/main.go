@@ -195,7 +195,7 @@ func runStart(cmd *cobra.Command, args []string) {
 
 	// Initialize Pricing and Tracker
 	pm := cost.NewPricingManager()
-	tracker := cost.NewTracker(s, pm)
+	tracker := cost.NewTracker(s, pm, &cfg.Server)
 
 	// Initialize all providers
 	providers := make(map[string]provider.Provider)
@@ -222,7 +222,11 @@ func runStart(cmd *cobra.Command, args []string) {
 	// Initialize limiters
 	limiters := make(map[string]*ratelimit.Limiter)
 	for _, m := range cfg.Models {
-		limiters[m.Alias] = ratelimit.NewLimiter(10, 20)
+		limit := m.RateLimit
+		if limit <= 0 {
+			limit = 10
+		}
+		limiters[m.Alias] = ratelimit.NewLimiter(float64(limit), float64(limit*2))
 	}
 
 	// Initialize server

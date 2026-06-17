@@ -52,7 +52,11 @@ func (r *Router) Complete(ctx context.Context, modelAlias string, req *provider.
 		return nil, fmt.Errorf("no providers configured for alias: %s", modelAlias)
 	}
 
-	fb := NewFallback(FallbackMode(modelCfg.FallbackMode), pList, 500*time.Millisecond)
+	latencyThreshold := 500 * time.Millisecond
+	if r.tracker != nil && r.tracker.Config() != nil {
+		latencyThreshold = time.Duration(r.tracker.Config().LatencyThresholdMs) * time.Millisecond
+	}
+	fb := NewFallback(FallbackMode(modelCfg.FallbackMode), pList, latencyThreshold)
 	resp, err := fb.Execute(ctx, req)
 	if err != nil {
 		return nil, err

@@ -2,22 +2,22 @@
 
 ### Critical
 
-- [ ] Fix cost calculation formula (saat ini over-report ~1000x).
-- [ ] Update semua unit test cost calculation (file: pricing_test.go, tracker_test.go, store_test.go).
-- [ ] Pindahkan Gemini API key dari URL query parameter ke request header (file: gemini.go).
-- [ ] Tambah pricing untuk semua model yang didukung.
-- [ ] Normalisasi error response ke client.
-- [ ] Hilangkan internal/provider error leakage.
+- [x] Fix cost calculation formula (saat ini over-report ~1000x).
+- [x] Update semua unit test cost calculation (file: pricing_test.go, tracker_test.go, store_test.go).
+- [x] Pindahkan Gemini API key dari URL query parameter ke request header (file: gemini.go).
+- [x] Tambah pricing untuk semua model yang didukung.
+- [x] Normalisasi error response ke client.
+- [x] Hilangkan internal/provider error leakage.
 
 ### High
 
-- [ ] Tambah request body size limit (1MB).
-- [ ] Tambah SQLite WAL mode.
-- [ ] Tambah SQLite busy timeout.
-- [ ] Set SQLite MaxOpenConns(1).
-- [ ] Gunakan latency_threshold_ms dari config.
-- [ ] Gunakan rate_limits dari config.
-- [ ] Tambah endpoint GET /health.
+- [x] Tambah request body size limit (1MB).
+- [x] Tambah SQLite WAL mode.
+- [x] Tambah SQLite busy timeout.
+- [x] Set SQLite MaxOpenConns(1).
+- [x] Gunakan latency_threshold_ms dari config.
+- [x] Gunakan rate_limits dari config.
+- [x] Tambah endpoint GET /health.
 - [ ] Fix Dashboard status agar tidak hardcoded RUNNING.
 - [ ] Fix Dashboard port agar tidak hardcoded.
 
@@ -29,12 +29,12 @@
 
 #### Reliability
 
-- [ ] GET /health endpoint.
+- [x] GET /health endpoint.
 - [ ] Startup provider validation.
-- [ ] Request body size limit middleware.
+- [x] Request body size limit middleware.
 - [ ] Provider health monitoring.
-- [ ] SQLite WAL mode.
-- [ ] SQLite connection tuning.
+- [x] SQLite WAL mode.
+- [x] SQLite connection tuning.
 
 #### Developer Experience
 
