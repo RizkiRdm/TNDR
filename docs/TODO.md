@@ -29,13 +29,13 @@
 [[MODIFY_COST_SYSTEM]]
 - [x] #MD-CS1 | Fix token pricing calculation
 - [x] #MD-CS2 | Expand pricing coverage
-- [ ] #MD-CS3 | Improve cost reporting transparency
-- [ ] #MD-CS4 | Add explainable cost breakdown
+- [x] #MD-CS3 | Improve cost reporting transparency
+- [x] #MD-CS4 | Add explainable cost breakdown
 
 [[MODIFY_CONFIGURATION]]
 - [x] #MD-CF1 | Write config to ~/.tendr/config.yaml with 0600 permission
-- [ ] #MD-CF2 | Remove hardcoded runtime values
-- [ ] #MD-CF3 | Ensure all documented config fields actually work
+- [x] #MD-CF2 | Remove hardcoded runtime values
+- [x] #MD-CF3 | Ensure all documented config fields actually work
 
 [[MODIFY_GATEWAY]]
 - [ ] #MD-GW1 | Normalize all provider errors
@@ -64,7 +64,7 @@
 
 [[SIMPLIFY_CODE]]
 - [ ] #SM-CD1 | Reduce TUI complexity until data is reliable
-- [ ] #SM-CD2 | Remove unused pricing_snapshots table
+- [x] #SM-CD2 | Remove unused pricing_snapshots table
 - [ ] #SM-CD3 | Remove dead code in gateway, CLI, and business logic
 
 [[TECH_DEBT_HIGH]]

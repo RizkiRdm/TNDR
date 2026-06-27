@@ -14,11 +14,15 @@ type AnthropicProvider struct {
 	base    *provider.BaseClient
 }
 
-func NewAnthropicProvider(apiKey string) *AnthropicProvider {
+func NewAnthropicProvider(apiKey string, timeoutMs int) *AnthropicProvider {
+	d := time.Duration(timeoutMs) * time.Millisecond
+	if d <= 0 {
+		d = 30 * time.Second
+	}
 	return &AnthropicProvider{
 		apiKey:  apiKey,
 		baseURL: "https://api.anthropic.com/v1",
-		base:    provider.NewBaseClient(),
+		base:    provider.NewBaseClient(d),
 	}
 }
 

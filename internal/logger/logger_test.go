@@ -15,7 +15,7 @@ func TestInit_DoesNotPanic(t *testing.T) {
 			t.Errorf("Init panicked: %v", r)
 		}
 	}()
-	Init("info", "")
+	Init("info", "", 50, 5, 28)
 }
 
 func TestInit_WithLogDir(t *testing.T) {
@@ -25,11 +25,11 @@ func TestInit_WithLogDir(t *testing.T) {
 		}
 	}()
 	dir := t.TempDir()
-	Init("debug", dir)
+	Init("debug", dir, 50, 5, 28)
 }
 
 func TestInit_InvalidLevel_FallsBackToInfo(t *testing.T) {
-	Init("invalidlevel", "")
+	Init("invalidlevel", "", 50, 5, 28)
 	if log.Logger.GetLevel() != zerolog.InfoLevel {
 		t.Errorf("expected InfoLevel, got %v", log.Logger.GetLevel())
 	}

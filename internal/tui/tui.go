@@ -19,14 +19,16 @@ type model struct {
 	width     int
 	height    int
 	startedAt time.Time
+	port      int
 }
 
-func New(s *store.Store) model {
+func New(s *store.Store, port int) model {
 	return model{
 		activeTab: 0,
 		tabs:      []string{"Dashboard", "Cost", "Cache", "Config", "Logs"},
 		store:     s,
 		startedAt: time.Now(),
+		port:      port,
 	}
 }
 
@@ -104,7 +106,7 @@ func (m model) View() string {
 	var content string
 	switch m.activeTab {
 	case 0:
-		content = tabs.DashboardView(m.store, m.startedAt, "4821", "RUNNING")
+		content = tabs.DashboardView(m.store, m.startedAt, fmt.Sprintf("%d", m.port), "LISTENING")
 	case 1:
 		content = tabs.CostView(m.store)
 	case 2:

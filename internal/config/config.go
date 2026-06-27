@@ -20,6 +20,9 @@ type ServerConfig struct {
 	GlobalKey          string  `mapstructure:"global_key"`
 	LatencyThresholdMs int     `mapstructure:"latency_threshold_ms"`
 	DailyCostLimit     float64 `mapstructure:"daily_cost_limit"`
+	LogMaxSizeMB       int     `mapstructure:"log_max_size_mb"`
+	LogMaxBackups      int     `mapstructure:"log_max_backups"`
+	LogMaxAgeDays      int     `mapstructure:"log_max_age_days"`
 }
 
 type ProvidersConfig struct {
@@ -65,6 +68,9 @@ func Load(configPath string) (*Config, error) {
 	viper.SetDefault("server.log_level", "info")
 	viper.SetDefault("server.latency_threshold_ms", 500)
 	viper.SetDefault("server.daily_cost_limit", 0.0)
+	viper.SetDefault("server.log_max_size_mb", 50)
+	viper.SetDefault("server.log_max_backups", 5)
+	viper.SetDefault("server.log_max_age_days", 28)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {

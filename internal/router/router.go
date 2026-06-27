@@ -12,9 +12,10 @@ import (
 )
 
 type Router struct {
-	providers map[string]provider.Provider
-	models    map[string]config.ModelAliasConfig
-	tracker   *cost.Tracker
+	providers        map[string]provider.Provider
+	models           map[string]config.ModelAliasConfig
+	tracker          *cost.Tracker
+	latencyThreshold time.Duration
 }
 
 func NewRouter(cfg *config.Config, providers map[string]provider.Provider, tracker *cost.Tracker) *Router {
@@ -23,10 +24,16 @@ func NewRouter(cfg *config.Config, providers map[string]provider.Provider, track
 		modelMap[m.Alias] = m
 	}
 
+	lt := time.Duration(cfg.Server.LatencyThresholdMs) * time.Millisecond
+	if lt <= 0 {
+		lt = 500 * time.Millisecond
+	}
+
 	return &Router{
-		providers: providers,
-		models:    modelMap,
-		tracker:   tracker,
+		providers:        providers,
+		models:           modelMap,
+		tracker:          tracker,
+		latencyThreshold: lt,
 	}
 }
 
@@ -52,11 +59,7 @@ func (r *Router) Complete(ctx context.Context, modelAlias string, req *provider.
 		return nil, fmt.Errorf("no providers configured for alias: %s", modelAlias)
 	}
 
-	latencyThreshold := 500 * time.Millisecond
-	if r.tracker != nil && r.tracker.Config() != nil {
-		latencyThreshold = time.Duration(r.tracker.Config().LatencyThresholdMs) * time.Millisecond
-	}
-	fb := NewFallback(FallbackMode(modelCfg.FallbackMode), pList, latencyThreshold)
+	fb := NewFallback(FallbackMode(modelCfg.FallbackMode), pList, r.latencyThreshold)
 	resp, err := fb.Execute(ctx, req)
 	if err != nil {
 		return nil, err

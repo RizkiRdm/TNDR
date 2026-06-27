@@ -13,7 +13,10 @@ import (
 )
 
 //go:embed migrations/001_init.sql
-var migrationSQL string
+var migration001 string
+
+//go:embed migrations/002_drop_pricing_snapshots.sql
+var migration002 string
 
 type Store struct {
 	db *sql.DB
@@ -116,8 +119,38 @@ func New(dbPath string) (*Store, error) {
 }
 
 func runMigrations(db *sql.DB) error {
-	_, err := db.Exec(migrationSQL)
-	return err
+	for _, m := range []string{migration001, migration002} {
+		if _, err := db.Exec(m); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type ProviderCost struct {
+	Provider         string
+	Cost             float64
+	PromptTokens     int64
+	CompletionTokens int64
+}
+
+func (s *Store) GetCostByProviderWithTokens(ctx context.Context) ([]ProviderCost, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT provider, COALESCE(SUM(cost), 0), COALESCE(SUM(prompt_tokens), 0), COALESCE(SUM(completion_tokens), 0) FROM requests GROUP BY provider`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []ProviderCost
+	for rows.Next() {
+		var pc ProviderCost
+		if err := rows.Scan(&pc.Provider, &pc.Cost, &pc.PromptTokens, &pc.CompletionTokens); err != nil {
+			continue
+		}
+		results = append(results, pc)
+	}
+	return results, rows.Err()
 }
 
 func (s *Store) GetCostByProvider(ctx context.Context) (map[string]float64, error) {

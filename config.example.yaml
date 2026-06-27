@@ -1,25 +1,42 @@
 server:
   port: 4821
   log_level: info
+  log_max_size_mb: 50
+  log_max_backups: 5
+  log_max_age_days: 28
+  global_key: ""
+  latency_threshold_ms: 500
+  daily_cost_limit: 0.0
 
 providers:
   openai:
     api_key: "your-openai-api-key"
+    timeout_ms: 30000
   anthropic:
     api_key: "your-anthropic-api-key"
+    timeout_ms: 30000
   gemini:
     api_key: "your-gemini-api-key"
+    timeout_ms: 30000
   groq:
     api_key: "your-groq-api-key"
+    timeout_ms: 30000
 
 models:
   - alias: coding
     fallback_mode: smart
+    rate_limit: 10
     providers:
       - openai
       - anthropic
   - alias: fast
     fallback_mode: fast
+    rate_limit: 30
     providers:
       - groq
       - openai
+
+pricing:
+  fetch_on_startup: false
+  pricing_url: ""
+  override: {}

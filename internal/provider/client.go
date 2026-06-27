@@ -11,18 +11,16 @@ import (
 	"time"
 )
 
-const defaultProviderTimeout = 30 * time.Second
-
 // BaseClient menyediakan fungsionalitas umum untuk semua provider AI.
 type BaseClient struct {
 	HTTPClient *http.Client
 }
 
-// NewBaseClient creates a new instance of BaseClient.
-func NewBaseClient() *BaseClient {
+// NewBaseClient creates a new instance of BaseClient with the given timeout.
+func NewBaseClient(timeout time.Duration) *BaseClient {
 	return &BaseClient{
 		HTTPClient: &http.Client{
-			Timeout: defaultProviderTimeout,
+			Timeout: timeout,
 		},
 	}
 }

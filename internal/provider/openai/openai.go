@@ -3,6 +3,8 @@ package openai
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	"github.com/RizkiRdm/TNDR/internal/provider"
 )
 
@@ -12,11 +14,15 @@ type OpenAIProvider struct {
 	base    *provider.BaseClient
 }
 
-func NewOpenAIProvider(apiKey string) *OpenAIProvider {
+func NewOpenAIProvider(apiKey string, timeoutMs int) *OpenAIProvider {
+	d := time.Duration(timeoutMs) * time.Millisecond
+	if d <= 0 {
+		d = 30 * time.Second
+	}
 	return &OpenAIProvider{
 		apiKey:  apiKey,
 		baseURL: "https://api.openai.com/v1",
-		base:    provider.NewBaseClient(),
+		base:    provider.NewBaseClient(d),
 	}
 }
 

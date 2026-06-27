@@ -11,7 +11,7 @@ import (
 )
 
 // Init initializes the global logger with the specified log level and log directory.
-func Init(level string, logDir string) {
+func Init(level string, logDir string, maxSizeMB int, maxBackups int, maxAgeDays int) {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	var writers []io.Writer
@@ -22,11 +22,20 @@ func Init(level string, logDir string) {
 		// Ensure log directory exists
 		if err := os.MkdirAll(logDir, 0755); err == nil {
 			logFile := filepath.Join(logDir, "tendr.log")
+			if maxSizeMB <= 0 {
+				maxSizeMB = 50
+			}
+			if maxBackups <= 0 {
+				maxBackups = 5
+			}
+			if maxAgeDays <= 0 {
+				maxAgeDays = 28
+			}
 			writers = append(writers, &lumberjack.Logger{
 				Filename:   logFile,
-				MaxSize:    10, // megabytes
-				MaxBackups: 3,
-				MaxAge:     28, // days
+				MaxSize:    maxSizeMB,
+				MaxBackups: maxBackups,
+				MaxAge:     maxAgeDays,
 				Compress:   true,
 			})
 		}

@@ -157,7 +157,12 @@ func runTUI(cmd *cobra.Command, args []string) {
 	}
 	defer s.Close()
 
-	m := tui.New(s)
+	port := 4821
+	if cfg, err := config.Load(configPath); err == nil {
+		port = cfg.Server.Port
+	}
+
+	m := tui.New(s, port)
 	
 	if cmd.Use == "cost" {
 		// Set active tab to Cost (index 1)
@@ -227,7 +232,7 @@ func runStart(cmd *cobra.Command, args []string) {
 
 	// Resolve log directory to ~/.tendr/logs/
 	logDir := filepath.Join(mustHomeDir(), ".tendr", "logs")
-	logger.Init(cfg.Server.LogLevel, logDir)
+	logger.Init(cfg.Server.LogLevel, logDir, cfg.Server.LogMaxSizeMB, cfg.Server.LogMaxBackups, cfg.Server.LogMaxAgeDays)
 
 	// Initialize Store
 	s, err := store.New(getDBPath())
@@ -245,16 +250,16 @@ func runStart(cmd *cobra.Command, args []string) {
 	providers := make(map[string]provider.Provider)
 
 	if cfg.Providers.OpenAI.APIKey != "" {
-		providers["openai"] = openai.NewOpenAIProvider(cfg.Providers.OpenAI.APIKey)
+		providers["openai"] = openai.NewOpenAIProvider(cfg.Providers.OpenAI.APIKey, cfg.Providers.OpenAI.Timeout)
 	}
 	if cfg.Providers.Anthropic.APIKey != "" {
-		providers["anthropic"] = anthropic.NewAnthropicProvider(cfg.Providers.Anthropic.APIKey)
+		providers["anthropic"] = anthropic.NewAnthropicProvider(cfg.Providers.Anthropic.APIKey, cfg.Providers.Anthropic.Timeout)
 	}
 	if cfg.Providers.Gemini.APIKey != "" {
-		providers["gemini"] = gemini.NewGeminiProvider(cfg.Providers.Gemini.APIKey)
+		providers["gemini"] = gemini.NewGeminiProvider(cfg.Providers.Gemini.APIKey, cfg.Providers.Gemini.Timeout)
 	}
 	if cfg.Providers.Groq.APIKey != "" {
-		providers["groq"] = groq.NewGroqProvider(cfg.Providers.Groq.APIKey)
+		providers["groq"] = groq.NewGroqProvider(cfg.Providers.Groq.APIKey, cfg.Providers.Groq.Timeout)
 	}
 
 	// Initialize router
@@ -447,16 +452,16 @@ func runInit(cmd *cobra.Command, args []string) {
 		Validate: func(ctx context.Context, providerName, key string) error {
 			switch providerName {
 			case "openai":
-				p := openai.NewOpenAIProvider(key)
+				p := openai.NewOpenAIProvider(key, 30000)
 				return p.Validate(ctx)
 			case "anthropic":
-				p := anthropic.NewAnthropicProvider(key)
+				p := anthropic.NewAnthropicProvider(key, 30000)
 				return p.Validate(ctx)
 			case "gemini":
-				p := gemini.NewGeminiProvider(key)
+				p := gemini.NewGeminiProvider(key, 30000)
 				return p.Validate(ctx)
 			case "groq":
-				p := groq.NewGroqProvider(key)
+				p := groq.NewGroqProvider(key, 30000)
 				return p.Validate(ctx)
 			default:
 				return fmt.Errorf("unknown provider: %s", providerName)
@@ -499,16 +504,31 @@ func runCost(cmd *cobra.Command, args []string) {
 			fmt.Printf("Error getting recent requests: %v\n", err)
 			os.Exit(1)
 		}
-		fmt.Println("Recent Request Rates:")
+		fmt.Println("Cost Breakdown per Request:")
+		fmt.Println("====================")
 		for _, r := range records {
-			fmt.Printf("[%s] %s/%s: Prompt: $%.6f, Completion: $%.6f, Total: $%.4f\n",
-				r.CreatedAt, r.Provider, r.Model, r.PromptRate, r.CompletionRate, r.Cost)
+			promptCost := (float64(r.PromptTokens) * r.PromptRate) / 1_000_000.0
+			compCost := (float64(r.CompletionTokens) * r.CompletionRate) / 1_000_000.0
+			fmt.Printf("[%s] %s/%s\n", r.CreatedAt, r.Provider, r.Model)
+			fmt.Printf("  %d prompt x $%.4f/1M  = $%.6f\n", r.PromptTokens, r.PromptRate, promptCost)
+			fmt.Printf("  %d comp   x $%.4f/1M  = $%.6f\n", r.CompletionTokens, r.CompletionRate, compCost)
+			fmt.Printf("  Total: $%.6f  (source: %s)\n", r.Cost, r.PricingSource)
+			fmt.Println("  ---")
 		}
 		return
 	}
 
 	if costJSON {
-		data, _ := json.MarshalIndent(summary, "", "  ")
+		type costReport struct {
+			Summary  store.CostSummary     `json:"summary"`
+			Provider []store.ProviderCost  `json:"by_provider,omitempty"`
+		}
+		providers, _ := s.GetCostByProviderWithTokens(context.Background())
+		report := costReport{Summary: *summary, Provider: providers}
+		if costProvider != "" {
+			report.Provider = nil
+		}
+		data, _ := json.MarshalIndent(report, "", "  ")
 		fmt.Println(string(data))
 		return
 	}
@@ -529,7 +549,20 @@ func runCost(cmd *cobra.Command, args []string) {
 	fmt.Printf("Last 7d:   $%.4f\n", summary.Week)
 	fmt.Printf("Last 30d:  $%.4f\n", summary.Month)
 	if summary.Month > 0 {
-		fmt.Printf("Projection (30d): $%.4f\n", (summary.Month/30.0)*30.0) // Simple projection
+		projection := (summary.Month / 30.0) * 30.0
+		fmt.Printf("Projection (30d): $%.4f\n", projection)
 	}
 	fmt.Printf("All Time:  $%.4f\n", summary.AllTime)
+
+	if costProvider == "" {
+		providers, err := s.GetCostByProviderWithTokens(context.Background())
+		if err == nil && len(providers) > 0 {
+			fmt.Println()
+			fmt.Println("By Provider:")
+			for _, p := range providers {
+				total := p.PromptTokens + p.CompletionTokens
+				fmt.Printf("  %-12s $%.4f  (%d tokens)\n", p.Provider+":", p.Cost, total)
+			}
+		}
+	}
 }

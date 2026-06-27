@@ -15,11 +15,15 @@ type GeminiProvider struct {
 	base    *provider.BaseClient
 }
 
-func NewGeminiProvider(apiKey string) *GeminiProvider {
+func NewGeminiProvider(apiKey string, timeoutMs int) *GeminiProvider {
+	d := time.Duration(timeoutMs) * time.Millisecond
+	if d <= 0 {
+		d = 30 * time.Second
+	}
 	return &GeminiProvider{
 		apiKey:  apiKey,
 		baseURL: "https://generativelanguage.googleapis.com/v1beta",
-		base:    provider.NewBaseClient(),
+		base:    provider.NewBaseClient(d),
 	}
 }
 

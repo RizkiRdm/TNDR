@@ -160,3 +160,60 @@ func TestStore_GetCostByProvider(t *testing.T) {
 	}
 }
 
+func TestStore_GetCostByProviderWithTokens(t *testing.T) {
+	s := setupTestStore(t)
+
+	_ = s.RecordRequest(context.Background(), &RequestRecord{
+		ID: "1", Provider: "openai", Model: "gpt-4o",
+		Cost: 0.10, PromptTokens: 1000, CompletionTokens: 500, TotalTokens: 1500,
+		CreatedAt: time.Now().Format(time.RFC3339),
+	})
+	_ = s.RecordRequest(context.Background(), &RequestRecord{
+		ID: "2", Provider: "openai", Model: "gpt-4o-mini",
+		Cost: 0.05, PromptTokens: 2000, CompletionTokens: 1000, TotalTokens: 3000,
+		CreatedAt: time.Now().Format(time.RFC3339),
+	})
+	_ = s.RecordRequest(context.Background(), &RequestRecord{
+		ID: "3", Provider: "anthropic", Model: "claude-3-5-sonnet-20240620",
+		Cost: 0.20, PromptTokens: 500, CompletionTokens: 250, TotalTokens: 750,
+		CreatedAt: time.Now().Format(time.RFC3339),
+	})
+
+	results, err := s.GetCostByProviderWithTokens(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(results) != 2 {
+		t.Fatalf("expected 2 providers, got %d", len(results))
+	}
+
+	const tol = 1e-9
+	for _, r := range results {
+		switch r.Provider {
+		case "openai":
+			if diff := r.Cost - 0.15; diff > tol || diff < -tol {
+				t.Errorf("expected openai cost 0.15, got %f", r.Cost)
+			}
+			if r.PromptTokens != 3000 {
+				t.Errorf("expected openai prompt_tokens 3000, got %d", r.PromptTokens)
+			}
+			if r.CompletionTokens != 1500 {
+				t.Errorf("expected openai completion_tokens 1500, got %d", r.CompletionTokens)
+			}
+		case "anthropic":
+			if diff := r.Cost - 0.20; diff > tol || diff < -tol {
+				t.Errorf("expected anthropic cost 0.20, got %f", r.Cost)
+			}
+			if r.PromptTokens != 500 {
+				t.Errorf("expected anthropic prompt_tokens 500, got %d", r.PromptTokens)
+			}
+			if r.CompletionTokens != 250 {
+				t.Errorf("expected anthropic completion_tokens 250, got %d", r.CompletionTokens)
+			}
+		default:
+			t.Errorf("unexpected provider: %s", r.Provider)
+		}
+	}
+}
+

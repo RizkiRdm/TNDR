@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestBaseClient_DoRequest(t *testing.T) {
@@ -52,7 +53,7 @@ func TestBaseClient_DoRequest(t *testing.T) {
 			}))
 			defer server.Close()
 
-			client := NewBaseClient()
+			client := NewBaseClient(30 * time.Second)
 			var resp testResponse
 			err := client.DoRequest(context.Background(), server.URL, nil, testRequest{Input: "test"}, &resp)
 
@@ -84,7 +85,7 @@ func TestBaseClient_StreamSSE(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewBaseClient()
+	client := NewBaseClient(30 * time.Second)
 	var received []string
 	err := client.StreamSSE(context.Background(), server.URL, nil, nil, func(data []byte) error {
 		received = append(received, string(data))

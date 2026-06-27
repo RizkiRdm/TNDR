@@ -27,7 +27,7 @@ func TestAnthropicProvider_Complete_Success(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	p := NewAnthropicProvider("test-key")
+	p := NewAnthropicProvider("test-key", 30000)
 	p.baseURL = ts.URL
 
 	req := &provider.CompletionRequest{Model: "claude-3-opus"}
@@ -50,7 +50,7 @@ func TestAnthropicProvider_Complete_RateLimit(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	p := NewAnthropicProvider("test-key")
+	p := NewAnthropicProvider("test-key", 30000)
 	p.baseURL = ts.URL
 
 	_, err := p.Complete(context.Background(), &provider.CompletionRequest{})

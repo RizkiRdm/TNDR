@@ -28,7 +28,7 @@ func TestGroqProvider_Complete_Success(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	p := NewGroqProvider("test-key")
+	p := NewGroqProvider("test-key", 30000)
 	p.baseURL = ts.URL
 
 	req := &provider.CompletionRequest{Model: "llama3"}
@@ -51,7 +51,7 @@ func TestGroqProvider_Complete_RateLimit(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	p := NewGroqProvider("test-key")
+	p := NewGroqProvider("test-key", 30000)
 	p.baseURL = ts.URL
 
 	_, err := p.Complete(context.Background(), &provider.CompletionRequest{})

@@ -29,7 +29,7 @@ func TestGeminiProvider_Complete_Success(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	p := NewGeminiProvider("test-key")
+	p := NewGeminiProvider("test-key", 30000)
 	p.baseURL = ts.URL
 
 	req := &provider.CompletionRequest{Model: "gemini-pro"}

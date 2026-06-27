@@ -32,7 +32,7 @@ func TestOpenAIProvider_Complete_Success(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	p := NewOpenAIProvider("test-key")
+	p := NewOpenAIProvider("test-key", 30000)
 	p.baseURL = ts.URL
 
 	req := &provider.CompletionRequest{Model: "gpt-3.5-turbo"}
@@ -58,7 +58,7 @@ func TestOpenAIProvider_Complete_RateLimit(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	p := NewOpenAIProvider("test-key")
+	p := NewOpenAIProvider("test-key", 30000)
 	p.baseURL = ts.URL
 
 	_, err := p.Complete(context.Background(), &provider.CompletionRequest{})
@@ -73,7 +73,7 @@ func TestOpenAIProvider_Complete_InvalidKey(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	p := NewOpenAIProvider("test-key")
+	p := NewOpenAIProvider("test-key", 30000)
 	p.baseURL = ts.URL
 
 	_, err := p.Complete(context.Background(), &provider.CompletionRequest{})
@@ -88,7 +88,7 @@ func TestOpenAIProvider_Complete_ServerError(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	p := NewOpenAIProvider("test-key")
+	p := NewOpenAIProvider("test-key", 30000)
 	p.baseURL = ts.URL
 
 	_, err := p.Complete(context.Background(), &provider.CompletionRequest{})
@@ -104,7 +104,7 @@ func TestOpenAIProvider_Stream_Success(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	p := NewOpenAIProvider("test-key")
+	p := NewOpenAIProvider("test-key", 30000)
 	p.baseURL = ts.URL
 
 	respChan, errChan := p.Stream(context.Background(), &provider.CompletionRequest{})

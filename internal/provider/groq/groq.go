@@ -3,6 +3,8 @@ package groq
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	"github.com/RizkiRdm/TNDR/internal/provider"
 )
 
@@ -12,11 +14,15 @@ type GroqProvider struct {
 	base    *provider.BaseClient
 }
 
-func NewGroqProvider(apiKey string) *GroqProvider {
+func NewGroqProvider(apiKey string, timeoutMs int) *GroqProvider {
+	d := time.Duration(timeoutMs) * time.Millisecond
+	if d <= 0 {
+		d = 30 * time.Second
+	}
 	return &GroqProvider{
 		apiKey:  apiKey,
 		baseURL: "https://api.groq.com/openai/v1",
-		base:    provider.NewBaseClient(),
+		base:    provider.NewBaseClient(d),
 	}
 }
 

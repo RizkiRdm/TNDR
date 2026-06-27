@@ -273,18 +273,6 @@ CREATE INDEX idx_cache_entries_hash ON cache_entries(request_hash);
 CREATE INDEX idx_cache_entries_expires ON cache_entries(expires_at);
 ```
 
-#### `pricing_snapshots`
-Records pricing table in use at any point in time.
-
-```sql
-CREATE TABLE pricing_snapshots (
-    id         TEXT PRIMARY KEY,
-    fetched_at DATETIME NOT NULL,
-    source     TEXT NOT NULL,              -- hardcoded | fetched | override
-    payload    TEXT NOT NULL               -- JSON blob of full pricing table
-);
-```
-
 ### Index Policy
 - REQUIRED on all columns used in WHERE clauses
 - REQUIRED on all timestamp columns used for range queries
