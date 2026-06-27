@@ -32,6 +32,8 @@ func (m *mockProvider) Complete(ctx context.Context, req *provider.CompletionReq
 func (m *mockProvider) Stream(ctx context.Context, req *provider.CompletionRequest) (<-chan *provider.StreamResponse, <-chan error) {
 	return nil, nil
 }
+func (m *mockProvider) Validate(ctx context.Context) error { return nil }
+func (m *mockProvider) Health(ctx context.Context) error { return nil }
 
 func TestRouter_Fallback(t *testing.T) {
 	cfg := &config.Config{

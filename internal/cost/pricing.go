@@ -4,6 +4,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"sync"
+
+	"github.com/RizkiRdm/TNDR/internal/config"
 )
 
 //go:embed pricing.json
@@ -51,4 +53,21 @@ func (pm *PricingManager) GetRate(provider, model string) (Pricing, string) {
 		return p, "remote"
 	}
 	return Pricing{}, "unknown"
+}
+
+// LoadOverrides populates the overrides mapping from user configuration overrides.
+func (pm *PricingManager) LoadOverrides(override map[string]map[string]config.ModelPricing) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	for provider, models := range override {
+		for model, p := range models {
+			pm.overrides[provider+model] = Pricing{
+				Provider:   provider,
+				Model:      model,
+				Prompt:     p.InputPer1m,
+				Completion: p.OutputPer1m,
+			}
+		}
+	}
 }

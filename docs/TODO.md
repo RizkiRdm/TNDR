@@ -22,18 +22,18 @@
 - [x] #FE-CV3 | Monthly spend projection
 
 [[FEATURES_SETUP_EXPERIENCE_HIGH]]
-- [ ] #FE-SE1 | Interactive setup wizard
-- [ ] #FE-SE2 | Provider auto-detection
-- [ ] #FE-SE3 | API key validation during setup
+- [x] #FE-SE1 | Interactive setup wizard
+- [x] #FE-SE2 | Provider auto-detection
+- [x] #FE-SE3 | API key validation during setup
 
 [[MODIFY_COST_SYSTEM]]
-- [ ] #MD-CS1 | Fix token pricing calculation
-- [ ] #MD-CS2 | Expand pricing coverage
+- [x] #MD-CS1 | Fix token pricing calculation
+- [x] #MD-CS2 | Expand pricing coverage
 - [ ] #MD-CS3 | Improve cost reporting transparency
 - [ ] #MD-CS4 | Add explainable cost breakdown
 
 [[MODIFY_CONFIGURATION]]
-- [ ] #MD-CF1 | Write config to ~/.tendr/config.yaml with 0600 permission
+- [x] #MD-CF1 | Write config to ~/.tendr/config.yaml with 0600 permission
 - [ ] #MD-CF2 | Remove hardcoded runtime values
 - [ ] #MD-CF3 | Ensure all documented config fields actually work
 

@@ -1,8 +1,19 @@
 [
   {"provider": "openai", "model": "gpt-4o", "prompt_rate": 2.50, "completion_rate": 10.00},
   {"provider": "openai", "model": "gpt-4o-mini", "prompt_rate": 0.15, "completion_rate": 0.60},
+  {"provider": "openai", "model": "o1-preview", "prompt_rate": 15.00, "completion_rate": 60.00},
+  {"provider": "openai", "model": "o1-mini", "prompt_rate": 3.00, "completion_rate": 12.00},
+  {"provider": "openai", "model": "o3-mini", "prompt_rate": 1.10, "completion_rate": 4.40},
+  {"provider": "openai", "model": "gpt-4-turbo", "prompt_rate": 10.00, "completion_rate": 30.00},
   {"provider": "anthropic", "model": "claude-3-5-sonnet-20240620", "prompt_rate": 3.00, "completion_rate": 15.00},
+  {"provider": "anthropic", "model": "claude-3-5-sonnet-20241022", "prompt_rate": 3.00, "completion_rate": 15.00},
+  {"provider": "anthropic", "model": "claude-3-5-haiku-20241022", "prompt_rate": 0.80, "completion_rate": 4.00},
   {"provider": "anthropic", "model": "claude-3-opus-20240229", "prompt_rate": 15.00, "completion_rate": 75.00},
   {"provider": "gemini", "model": "gemini-1.5-pro", "prompt_rate": 3.50, "completion_rate": 10.50},
-  {"provider": "gemini", "model": "gemini-1.5-flash", "prompt_rate": 0.075, "completion_rate": 0.30}
+  {"provider": "gemini", "model": "gemini-1.5-flash", "prompt_rate": 0.075, "completion_rate": 0.30},
+  {"provider": "groq", "model": "llama-3.1-70b-versatile", "prompt_rate": 0.59, "completion_rate": 0.79},
+  {"provider": "groq", "model": "llama-3.1-8b-instant", "prompt_rate": 0.05, "completion_rate": 0.08},
+  {"provider": "groq", "model": "llama3-70b-8192", "prompt_rate": 0.59, "completion_rate": 0.79},
+  {"provider": "groq", "model": "llama3-8b-8192", "prompt_rate": 0.05, "completion_rate": 0.08},
+  {"provider": "groq", "model": "mixtral-8x7b-32768", "prompt_rate": 0.24, "completion_rate": 0.24}
 ]

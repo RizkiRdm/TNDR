@@ -2,6 +2,8 @@ package cost
 
 import (
 	"testing"
+
+	"github.com/RizkiRdm/TNDR/internal/config"
 )
 
 func TestPricingManager_LoadEmbedded(t *testing.T) {
@@ -40,5 +42,26 @@ func TestPricingManager_GetRate_Unknown(t *testing.T) {
 	_, source := pm.GetRate("fakeprovider", "fakemodel")
 	if source != "unknown" {
 		t.Errorf("expected source 'unknown', got '%s'", source)
+	}
+}
+
+func TestPricingManager_LoadOverrides(t *testing.T) {
+	pm := NewPricingManager()
+	overrides := map[string]map[string]config.ModelPricing{
+		"openai": {
+			"gpt-4o": config.ModelPricing{
+				InputPer1m:  5.0,
+				OutputPer1m: 15.0,
+			},
+		},
+	}
+	pm.LoadOverrides(overrides)
+
+	p, source := pm.GetRate("openai", "gpt-4o")
+	if source != "override" {
+		t.Fatalf("expected source 'override', got '%s'", source)
+	}
+	if p.Prompt != 5.0 || p.Completion != 15.0 {
+		t.Errorf("expected rates 5.0/15.0, got %f/%f", p.Prompt, p.Completion)
 	}
 }

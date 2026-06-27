@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -113,7 +116,14 @@ func main() {
 	}
 	cacheCmd.AddCommand(cacheClearCmd)
 
-	rootCmd.AddCommand(startCmd, healthCmd, testCmd, doctorCmd, logsCmd, initCmd, costCmd, monitorCmd, cacheCmd)
+    // updateCmd implements self-update functionality
+    updateCmd := &cobra.Command{
+        Use:   "update",
+        Short: "Update tendr to latest release",
+        Run:   runUpdate,
+    }
+    // Add to root command after other subcommands
+    rootCmd.AddCommand(startCmd, healthCmd, testCmd, doctorCmd, logsCmd, initCmd, costCmd, monitorCmd, cacheCmd, updateCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -228,6 +238,7 @@ func runStart(cmd *cobra.Command, args []string) {
 
 	// Initialize Pricing and Tracker
 	pm := cost.NewPricingManager()
+	pm.LoadOverrides(cfg.Pricing.Override)
 	tracker := cost.NewTracker(s, pm, &cfg.Server)
 
 	// Initialize all providers
@@ -321,6 +332,86 @@ func runDoctor(cmd *cobra.Command, args []string) {
 	}
 }
 
+func runUpdate(cmd *cobra.Command, args []string) {
+    // Determine current executable path
+    exePath, err := os.Executable()
+    if err != nil {
+        fmt.Printf("Unable to locate executable: %v\n", err)
+        os.Exit(1)
+    }
+
+    // Get latest release info from GitHub API
+    resp, err := http.Get("https://api.github.com/repos/RizkiRdm/TNDR/releases/latest")
+    if err != nil {
+        fmt.Printf("Failed to query GitHub releases: %v\n", err)
+        os.Exit(1)
+    }
+    defer resp.Body.Close()
+    if resp.StatusCode != 200 {
+        fmt.Printf("GitHub API returned %d\n", resp.StatusCode)
+        os.Exit(1)
+    }
+    var release struct {
+        TagName string `json:"tag_name"`
+        Assets  []struct {
+            Name               string `json:"name"`
+            BrowserDownloadURL string `json:"browser_download_url"`
+        } `json:"assets"`
+    }
+    if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+        fmt.Printf("Failed to parse release JSON: %v\n", err)
+        os.Exit(1)
+    }
+
+    // Build expected asset name
+    osName := runtime.GOOS
+    arch := runtime.GOARCH
+    expected := fmt.Sprintf("tendr-%s-%s", osName, arch)
+
+    var assetURL string
+    for _, a := range release.Assets {
+        if strings.Contains(a.Name, expected) {
+            assetURL = a.BrowserDownloadURL
+            break
+        }
+    }
+    if assetURL == "" {
+        fmt.Printf("No binary asset found for %s/%s in latest release %s\n", osName, arch, release.TagName)
+        os.Exit(1)
+    }
+
+    // Download binary to temporary location
+    tmpFile, err := os.CreateTemp("", "tendr-update-*")
+    if err != nil {
+        fmt.Printf("Failed to create temp file: %v\n", err)
+        os.Exit(1)
+    }
+    defer os.Remove(tmpFile.Name())
+
+    resp, err = http.Get(assetURL)
+    if err != nil {
+        fmt.Printf("Failed to download asset: %v\n", err)
+        os.Exit(1)
+    }
+    defer resp.Body.Close()
+    if _, err := io.Copy(tmpFile, resp.Body); err != nil {
+        fmt.Printf("Failed to write binary: %v\n", err)
+        os.Exit(1)
+    }
+    if err := tmpFile.Chmod(0755); err != nil {
+        fmt.Printf("Failed to chmod binary: %v\n", err)
+        os.Exit(1)
+    }
+    tmpFile.Close()
+
+    // Replace current executable atomically
+    if err := os.Rename(tmpFile.Name(), exePath); err != nil {
+        fmt.Printf("Failed to replace executable: %v\n", err)
+        os.Exit(1)
+    }
+    fmt.Println("tendr updated to", release.TagName)
+}
+
 func runLogs(cmd *cobra.Command, args []string) {
 	logPath := filepath.Join(mustHomeDir(), ".tendr", "logs", "tendr.log")
 	data, err := os.ReadFile(logPath)
@@ -332,33 +423,53 @@ func runLogs(cmd *cobra.Command, args []string) {
 }
 
 func runInit(cmd *cobra.Command, args []string) {
-	exampleConfig := `server:
-  port: 4821
-  log_level: info
+	path := configPath
+	if path == "" {
+		home := mustHomeDir()
+		tendrDir := filepath.Join(home, ".tendr")
+		if err := os.MkdirAll(tendrDir, 0700); err != nil {
+			fmt.Printf("Error creating directory %s: %v\n", tendrDir, err)
+			os.Exit(1)
+		}
+		path = filepath.Join(tendrDir, "config.yaml")
+	} else {
+		dir := filepath.Dir(path)
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			fmt.Printf("Error creating directory %s: %v\n", dir, err)
+			os.Exit(1)
+		}
+	}
 
-providers:
-  openai:
-    api_key: ""
-  anthropic:
-    api_key: ""
-  gemini:
-    api_key: ""
-  groq:
-    api_key: ""
+	sw := &config.SetupWizard{
+		Stdin:  os.Stdin,
+		Stdout: os.Stdout,
+		EnvGet: os.Getenv,
+		Validate: func(ctx context.Context, providerName, key string) error {
+			switch providerName {
+			case "openai":
+				p := openai.NewOpenAIProvider(key)
+				return p.Validate(ctx)
+			case "anthropic":
+				p := anthropic.NewAnthropicProvider(key)
+				return p.Validate(ctx)
+			case "gemini":
+				p := gemini.NewGeminiProvider(key)
+				return p.Validate(ctx)
+			case "groq":
+				p := groq.NewGroqProvider(key)
+				return p.Validate(ctx)
+			default:
+				return fmt.Errorf("unknown provider: %s", providerName)
+			}
+		},
+		WriteFile: os.WriteFile,
+	}
 
-models:
-  - alias: coding
-    fallback_mode: smart
-    providers:
-      - openai
-      - anthropic
-`
-	err := os.WriteFile("config.yaml", []byte(exampleConfig), 0644)
+	err := sw.Run(context.Background(), path)
 	if err != nil {
-		fmt.Printf("Error writing config.yaml: %v\n", err)
+		fmt.Printf("Error running setup wizard: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("config.yaml initialized successfully")
 }
 
 func runCost(cmd *cobra.Command, args []string) {

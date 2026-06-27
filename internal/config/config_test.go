@@ -87,3 +87,29 @@ func TestValidate_ValidFallbackModes(t *testing.T) {
 		})
 	}
 }
+
+func TestValidate_PricingURL(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+		want bool
+	}{
+		{"empty url", "", false},
+		{"valid github url", "https://raw.githubusercontent.com/RizkiRdm/TNDR/main/pricing.json", false},
+		{"invalid arbitrary url", "https://example.com/pricing.json", true},
+		{"invalid protocol", "http://raw.githubusercontent.com/RizkiRdm/TNDR/main/pricing.json", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{
+				Server: ServerConfig{Port: 4821},
+				Pricing: PricingConfig{PricingURL: tt.url},
+			}
+			err := validate(cfg)
+			if (err != nil) != tt.want {
+				t.Errorf("got error %v; want error %v", err, tt.want)
+			}
+		})
+	}
+}

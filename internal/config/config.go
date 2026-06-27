@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -10,6 +11,7 @@ type Config struct {
 	Server    ServerConfig       `mapstructure:"server"`
 	Providers ProvidersConfig    `mapstructure:"providers"`
 	Models    []ModelAliasConfig `mapstructure:"models"`
+	Pricing   PricingConfig      `mapstructure:"pricing"`
 }
 
 type ServerConfig struct {
@@ -37,6 +39,17 @@ type ModelAliasConfig struct {
 	FallbackMode string   `mapstructure:"fallback_mode"`
 	Providers    []string `mapstructure:"providers"`
 	RateLimit    int      `mapstructure:"rate_limit"`
+}
+
+type PricingConfig struct {
+	FetchOnStartup bool                            `mapstructure:"fetch_on_startup"`
+	PricingURL     string                          `mapstructure:"pricing_url"`
+	Override       map[string]map[string]ModelPricing `mapstructure:"override"`
+}
+
+type ModelPricing struct {
+	InputPer1m  float64 `mapstructure:"input_per_1m"`
+	OutputPer1m float64 `mapstructure:"output_per_1m"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -87,6 +100,11 @@ func validate(cfg *Config) error {
 		}
 		if m.FallbackMode != "" && !validFallbackModes[m.FallbackMode] {
 			return fmt.Errorf("validate: model %q has invalid fallback_mode: %q (must be reliable|fast|smart)", m.Alias, m.FallbackMode)
+		}
+	}
+	if cfg.Pricing.PricingURL != "" {
+		if !strings.HasPrefix(cfg.Pricing.PricingURL, "https://raw.githubusercontent.com/") {
+			return fmt.Errorf("validate: pricing_url %q not in allowlist (must start with https://raw.githubusercontent.com/)", cfg.Pricing.PricingURL)
 		}
 	}
 	return nil

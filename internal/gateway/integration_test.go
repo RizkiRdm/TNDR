@@ -30,6 +30,8 @@ func (m *MockProvider) Complete(ctx context.Context, req *provider.CompletionReq
 func (m *MockProvider) Stream(ctx context.Context, req *provider.CompletionRequest) (<-chan *provider.StreamResponse, <-chan error) {
 	return nil, nil
 }
+func (m *MockProvider) Validate(ctx context.Context) error { return nil }
+func (m *MockProvider) Health(ctx context.Context) error { return nil }
 
 func setupGateway(t *testing.T, providers []provider.Provider, models []config.ModelAliasConfig) (*Server, *store.Store) {
 	tmpDB := t.TempDir() + "/tendr.db"
