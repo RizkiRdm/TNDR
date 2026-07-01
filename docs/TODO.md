@@ -38,10 +38,10 @@
 - [x] #MD-CF3 | Ensure all documented config fields actually work
 
 [[MODIFY_GATEWAY]]
-- [ ] #MD-GW1 | Normalize all provider errors
-- [ ] #MD-GW2 | Improve fallback explanations
-- [ ] #MD-GW3 | Add request limits
-- [ ] #MD-GW4 | Improve observability
+- [x] #MD-GW1 | Normalize all provider errors
+- [x] #MD-GW2 | Improve fallback explanations
+- [x] #MD-GW3 | Add request limits
+- [x] #MD-GW4 | Improve observability
 
 [[MODIFY_CACHE]]
 - [ ] #MD-CH1 | Replace pseudo-LRU eviction with proper LRU
@@ -81,13 +81,3 @@
 [[TECH_DEBT_LOW]]
 - [ ] #TD-L1 | Cleanup unused code & improve internal comments
 - [ ] #TD-L2 | Refactor TUI rendering
-
-next task is:                                                                      
-                                                                                      
-   [[FEATURES_RELIABILITY_HIGH]]                                                      
-   - [ ] #FE-R1 | Startup provider validation                                         
-   - [ ] #FE-R2 | Provider health monitoring                                          
-                                                                                      
-   in @docs/TODO.md                                                                   
-                                                                                      
-   can you do it @generalist?  

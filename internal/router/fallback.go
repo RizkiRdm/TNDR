@@ -18,14 +18,25 @@ const (
 	ModeSmart    FallbackMode = "smart"
 )
 
+type Attempt struct {
+	Provider  string `json:"provider"`
+	Error     string `json:"error,omitempty"`
+	LatencyMs int64  `json:"latency_ms,omitempty"`
+}
+
 type ProviderError struct {
 	StatusCode int
 	Message    string
 	Err        error
+	Attempts   []Attempt
 }
 
 func (e *ProviderError) Error() string {
 	return fmt.Sprintf("provider error: %s: %v", e.Message, e.Err)
+}
+
+func (e *ProviderError) Unwrap() error {
+	return e.Err
 }
 
 // Fallback handles provider chain execution based on mode
@@ -46,6 +57,7 @@ func NewFallback(mode FallbackMode, providers []provider.Provider, latencyThresh
 // Execute tries providers sequentially.
 func (f *Fallback) Execute(ctx context.Context, req *provider.CompletionRequest) (*provider.CompletionResponse, error) {
 	var lastErr error
+	var attempts []Attempt
 
 	for i, p := range f.providers {
 		start := time.Now()
@@ -54,14 +66,24 @@ func (f *Fallback) Execute(ctx context.Context, req *provider.CompletionRequest)
 
 		if err == nil {
 			isLast := i == len(f.providers)-1
-			
-			// Fast mode: trigger fallback if slow, unless it's the last provider
+
+			// Fast mode: skip if slow, unless last
 			if f.mode == ModeFast && latency > f.latencyThreshold && !isLast {
+				attempts = append(attempts, Attempt{
+					Provider:  p.Name(),
+					Error:     "slow (> threshold)",
+					LatencyMs: latency.Milliseconds(),
+				})
 				continue
 			}
-			
-			// Smart mode: trigger fallback if slow OR hard error, unless last
+
+			// Smart mode: skip if slow, unless last
 			if f.mode == ModeSmart && latency > f.latencyThreshold && !isLast {
+				attempts = append(attempts, Attempt{
+					Provider:  p.Name(),
+					Error:     "slow (> threshold)",
+					LatencyMs: latency.Milliseconds(),
+				})
 				continue
 			}
 
@@ -69,6 +91,11 @@ func (f *Fallback) Execute(ctx context.Context, req *provider.CompletionRequest)
 		}
 
 		lastErr = err
+		attempts = append(attempts, Attempt{
+			Provider:  p.Name(),
+			Error:     err.Error(),
+			LatencyMs: latency.Milliseconds(),
+		})
 
 		// Reliable and Smart modes: trigger fallback on hard errors
 		if f.mode == ModeReliable || f.mode == ModeSmart {
@@ -82,6 +109,7 @@ func (f *Fallback) Execute(ctx context.Context, req *provider.CompletionRequest)
 		StatusCode: http.StatusBadGateway,
 		Message:    "all providers exhausted",
 		Err:        lastErr,
+		Attempts:   attempts,
 	}
 }
 

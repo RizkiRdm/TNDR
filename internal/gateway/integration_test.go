@@ -190,3 +190,25 @@ func TestGateway_InvalidRequestBody(t *testing.T) {
 		t.Errorf("expected 400, got %d", w.Code)
 	}
 }
+
+func TestRateLimit(t *testing.T) {
+	c := cache.NewExact(5 * time.Minute)
+	s, _ := store.New(":memory:")
+	limiters := map[string]*ratelimit.Limiter{
+		"test-model": ratelimit.NewLimiter(0.1, 1),
+	}
+	r := router.NewRouter(&config.Config{}, nil, nil)
+	srv := NewServer(0, r, c, s, limiters, &config.ServerConfig{Port: 0, LogLevel: "debug"})
+
+	reqBody, _ := json.Marshal(provider.CompletionRequest{Model: "test-model"})
+	for i := 0; i < 5; i++ {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest("POST", "/v1/chat/completions", bytes.NewBuffer(reqBody))
+		srv.router.ServeHTTP(rec, req)
+
+		if i > 0 && rec.Code == http.StatusTooManyRequests {
+			return
+		}
+	}
+	t.Error("expected rate limit")
+}

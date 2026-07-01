@@ -7,6 +7,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	defaultPort             = 4821
+	defaultLogLevel         = "info"
+	defaultLatencyThreshold = 500
+	defaultLogMaxSizeMB     = 50
+	defaultLogMaxBackups    = 5
+	defaultLogMaxAgeDays    = 28
+	defaultTimeoutMs        = 30000
+	defaultRateLimit        = 10
+)
+
 type Config struct {
 	Server    ServerConfig       `mapstructure:"server"`
 	Providers ProvidersConfig    `mapstructure:"providers"`
@@ -15,14 +26,16 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port               int     `mapstructure:"port"`
-	LogLevel           string  `mapstructure:"log_level"`
-	GlobalKey          string  `mapstructure:"global_key"`
-	LatencyThresholdMs int     `mapstructure:"latency_threshold_ms"`
-	DailyCostLimit     float64 `mapstructure:"daily_cost_limit"`
-	LogMaxSizeMB       int     `mapstructure:"log_max_size_mb"`
-	LogMaxBackups      int     `mapstructure:"log_max_backups"`
-	LogMaxAgeDays      int     `mapstructure:"log_max_age_days"`
+	Port                 int     `mapstructure:"port"`
+	LogLevel             string  `mapstructure:"log_level"`
+	GlobalKey            string  `mapstructure:"global_key"`
+	LatencyThresholdMs   int     `mapstructure:"latency_threshold_ms"`
+	DailyCostLimit       float64 `mapstructure:"daily_cost_limit"`
+	LogMaxSizeMB         int     `mapstructure:"log_max_size_mb"`
+	LogMaxBackups        int     `mapstructure:"log_max_backups"`
+	LogMaxAgeDays        int     `mapstructure:"log_max_age_days"`
+	MaxConcurrentRequests int    `mapstructure:"max_concurrent_requests"`
+	MaxRequestsPerSecond  int    `mapstructure:"max_requests_per_second"`
 }
 
 type ProvidersConfig struct {
@@ -55,6 +68,45 @@ type ModelPricing struct {
 	OutputPer1m float64 `mapstructure:"output_per_1m"`
 }
 
+func applyDefaults(cfg *Config) {
+	if cfg.Server.Port == 0 {
+		cfg.Server.Port = defaultPort
+	}
+	if cfg.Server.LogLevel == "" {
+		cfg.Server.LogLevel = defaultLogLevel
+	}
+	if cfg.Server.LatencyThresholdMs == 0 {
+		cfg.Server.LatencyThresholdMs = defaultLatencyThreshold
+	}
+	if cfg.Server.LogMaxSizeMB == 0 {
+		cfg.Server.LogMaxSizeMB = defaultLogMaxSizeMB
+	}
+	if cfg.Server.LogMaxBackups == 0 {
+		cfg.Server.LogMaxBackups = defaultLogMaxBackups
+	}
+	if cfg.Server.LogMaxAgeDays == 0 {
+		cfg.Server.LogMaxAgeDays = defaultLogMaxAgeDays
+	}
+
+	providers := []*ProviderSettings{
+		&cfg.Providers.OpenAI,
+		&cfg.Providers.Anthropic,
+		&cfg.Providers.Gemini,
+		&cfg.Providers.Groq,
+	}
+	for _, p := range providers {
+		if p.Timeout == 0 {
+			p.Timeout = defaultTimeoutMs
+		}
+	}
+
+	for i := range cfg.Models {
+		if cfg.Models[i].RateLimit == 0 {
+			cfg.Models[i].RateLimit = defaultRateLimit
+		}
+	}
+}
+
 func Load(configPath string) (*Config, error) {
 	if configPath != "" {
 		viper.SetConfigFile(configPath)
@@ -63,14 +115,6 @@ func Load(configPath string) (*Config, error) {
 		viper.SetConfigName("config")
 		viper.SetConfigType("yaml")
 	}
-
-	viper.SetDefault("server.port", 4821)
-	viper.SetDefault("server.log_level", "info")
-	viper.SetDefault("server.latency_threshold_ms", 500)
-	viper.SetDefault("server.daily_cost_limit", 0.0)
-	viper.SetDefault("server.log_max_size_mb", 50)
-	viper.SetDefault("server.log_max_backups", 5)
-	viper.SetDefault("server.log_max_age_days", 28)
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
@@ -83,6 +127,8 @@ func Load(configPath string) (*Config, error) {
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("unmarshal config: %w", err)
 	}
+
+	applyDefaults(&cfg)
 
 	if err := validate(&cfg); err != nil {
 		return nil, fmt.Errorf("validate config: %w", err)

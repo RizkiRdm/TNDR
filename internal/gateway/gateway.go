@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -26,6 +27,8 @@ type Server struct {
 	store      *store.Store
 	limiters   map[string]*ratelimit.Limiter
 	config     *config.ServerConfig
+	sem        chan struct{}
+	globalRL   *ratelimit.Limiter
 }
 
 func NewServer(port int, r *router.Router, c *cache.Exact, st *store.Store, l map[string]*ratelimit.Limiter, cfg *config.ServerConfig) *Server {
@@ -36,13 +39,25 @@ func NewServer(port int, r *router.Router, c *cache.Exact, st *store.Store, l ma
 	mux.Use(middleware.Recoverer)
 	mux.Use(GlobalKeyMiddleware(cfg))
 
+	var sem chan struct{}
+	if cfg.MaxConcurrentRequests > 0 {
+		sem = make(chan struct{}, cfg.MaxConcurrentRequests)
+	}
+
+	var globalRL *ratelimit.Limiter
+	if cfg.MaxRequestsPerSecond > 0 {
+		globalRL = ratelimit.NewLimiter(float64(cfg.MaxRequestsPerSecond), float64(cfg.MaxRequestsPerSecond))
+	}
+
 	s := &Server{
-		router:   mux,
-		gwRouter: r,
-		cache:    c,
-		store:    st,
-		limiters: l,
-		config:   cfg,
+		router:    mux,
+		gwRouter:  r,
+		cache:     c,
+		store:     st,
+		limiters:  l,
+		config:    cfg,
+		sem:       sem,
+		globalRL:  globalRL,
 		httpServer: &http.Server{
 			Addr:    fmt.Sprintf(":%d", port),
 			Handler: mux,
@@ -68,19 +83,47 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+	reqID := middleware.GetReqID(r.Context())
+
 	// Limit request body size to 1MB
 	r.Body = http.MaxBytesReader(w, r.Body, 1024*1024)
 
 	var req provider.CompletionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Error().Str("request_id", reqID).Err(err).Msg("gateway.request.invalid_body")
 		http.Error(w, "invalid request body or body too large", http.StatusBadRequest)
 		return
 	}
 
-	// Rate limit check
+	// GW3: concurrent request semaphore
+	if s.sem != nil {
+		select {
+		case s.sem <- struct{}{}:
+			defer func() { <-s.sem }()
+		default:
+			log.Warn().Str("request_id", reqID).Str("model", req.Model).Msg("gateway.request.concurrency_limit")
+			w.Header().Set("Retry-After", "1")
+			http.Error(w, "rate_limit_exceeded", http.StatusTooManyRequests)
+			return
+		}
+	}
+
+	// GW3: global rate limiter
+	if s.globalRL != nil && !s.globalRL.Allow() {
+		log.Warn().Str("request_id", reqID).Str("model", req.Model).Msg("gateway.request.rate_limited_global")
+		w.Header().Set("Retry-After", "1")
+		http.Error(w, "rate_limit_exceeded", http.StatusTooManyRequests)
+		return
+	}
+
+	// GW4: structured log - request start
+	log.Info().Str("request_id", reqID).Str("model", req.Model).Bool("stream", req.Stream).Msg("gateway.request.start")
+
+	// Per-model rate limit check
 	if limiter, ok := s.limiters[req.Model]; ok {
 		if !limiter.Allow() {
-			log.Warn().Str("model", req.Model).Msg("model_rate_limit_hit")
+			log.Warn().Str("request_id", reqID).Str("model", req.Model).Msg("gateway.request.rate_limited_model")
 			w.Header().Set("Retry-After", "1")
 			http.Error(w, "rate_limit_exceeded", http.StatusTooManyRequests)
 			return
@@ -92,7 +135,7 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		for _, p := range modelCfg.Providers {
 			if limiter, ok := s.limiters[p]; ok {
 				if !limiter.Allow() {
-					log.Warn().Str("provider", p).Msg("provider_rate_limit_hit")
+					log.Warn().Str("request_id", reqID).Str("provider", p).Msg("gateway.request.rate_limited_provider")
 					w.Header().Set("Retry-After", "1")
 					http.Error(w, "rate_limit_exceeded", http.StatusTooManyRequests)
 					return
@@ -109,9 +152,10 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 	key, err := cache.HashKey(req)
 	if err == nil {
 		if val, ok := s.cache.Get(key); ok {
+			log.Info().Str("request_id", reqID).Str("model", req.Model).Msg("gateway.request.cache_hit")
 			go s.store.RecordCacheHit(context.Background(), key)
 			go s.store.RecordRequest(context.Background(), &store.RequestRecord{
-				ID:            middleware.GetReqID(r.Context()),
+				ID:            reqID,
 				Model:         req.Model,
 				Cost:          0.0,
 				PricingSource: "cache",
@@ -123,17 +167,13 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	log.Info().Str("request_id", reqID).Str("model", req.Model).Msg("gateway.request.cache_miss")
 
 	// In TENDR, we use the 'model' field as the alias
 	resp, err := s.gwRouter.Complete(r.Context(), req.Model, &req)
+	latency := time.Since(start)
 	if err != nil {
-		log.Error().Err(err).Str("model", req.Model).Msg("routing failed")
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadGateway)
-		json.NewEncoder(w).Encode(map[string]string{
-			"error": "provider_unavailable",
-			"message": "The requested AI provider is currently unavailable or returned an error.",
-		})
+		writeErrorResponse(w, reqID, req.Model, start, err)
 		return
 	}
 	if err == nil {
@@ -143,8 +183,77 @@ func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	log.Info().
+		Str("request_id", reqID).
+		Str("model", req.Model).
+		Str("provider", resp.Provider).
+		Int64("latency_ms", latency.Milliseconds()).
+		Int("prompt_tokens", resp.Usage.PromptTokens).
+		Int("completion_tokens", resp.Usage.CompletionTokens).
+		Msg("gateway.request.complete")
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Tendr-Cache", "MISS")
+	w.Header().Set("X-Tendr-Provider", resp.Provider)
+	w.Header().Set("X-Tendr-Latency-Ms", fmt.Sprintf("%d", latency.Milliseconds()))
+	json.NewEncoder(w).Encode(resp)
+}
+
+func writeErrorResponse(w http.ResponseWriter, reqID, model string, start time.Time, err error) {
+	latency := time.Since(start)
+	var statusCode int
+	var errorCode string
+	var attempts []router.Attempt
+
+	switch {
+	case errors.Is(err, provider.ErrRateLimit):
+		statusCode = http.StatusTooManyRequests
+		errorCode = "rate_limit_exceeded"
+	case errors.Is(err, provider.ErrInvalidKey):
+		statusCode = http.StatusUnauthorized
+		errorCode = "invalid_key"
+	case errors.Is(err, provider.ErrTimeout):
+		statusCode = http.StatusGatewayTimeout
+		errorCode = "provider_timeout"
+	case errors.Is(err, provider.ErrProviderDown):
+		statusCode = http.StatusBadGateway
+		errorCode = "provider_unavailable"
+	default:
+		statusCode = http.StatusBadGateway
+		errorCode = "provider_unavailable"
+	}
+
+	var pe *router.ProviderError
+	if errors.As(err, &pe) {
+		attempts = pe.Attempts
+		// Fallback exhaustion with ≥2 attempts → infrastructure failure
+		if len(attempts) >= 2 {
+			statusCode = http.StatusBadGateway
+			errorCode = "provider_unavailable"
+		}
+	}
+
+	log.Error().
+		Str("request_id", reqID).
+		Str("model", model).
+		Err(err).
+		Int("status", statusCode).
+		Str("error_code", errorCode).
+		Int64("latency_ms", latency.Milliseconds()).
+		Msg("gateway.request.error")
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Tendr-Error-Code", errorCode)
+	w.Header().Set("X-Tendr-Latency-Ms", fmt.Sprintf("%d", latency.Milliseconds()))
+	w.WriteHeader(statusCode)
+
+	resp := map[string]interface{}{
+		"error":   errorCode,
+		"message": "The requested AI provider is currently unavailable or returned an error.",
+	}
+	if len(attempts) > 0 {
+		resp["attempts"] = attempts
+	}
 	json.NewEncoder(w).Encode(resp)
 }
 
@@ -158,6 +267,7 @@ func (s *Server) handleStreaming(w http.ResponseWriter, r *http.Request, req *pr
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
+		log.Error().Msg("gateway.stream.flusher_unsupported")
 		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
 		return
 	}
@@ -165,11 +275,21 @@ func (s *Server) handleStreaming(w http.ResponseWriter, r *http.Request, req *pr
 	for {
 		select {
 		case <-r.Context().Done():
+			log.Info().Str("request_id", middleware.GetReqID(r.Context())).Msg("gateway.stream.cancelled")
 			return
 		case err, ok := <-errChan:
 			if ok && err != nil {
-				log.Error().Err(err).Msg("stream error")
-				fmt.Fprintf(w, "event: error\ndata: %v\n\n", err)
+				errorCode := "provider_unavailable"
+				switch {
+				case errors.Is(err, provider.ErrRateLimit):
+					errorCode = "rate_limit_exceeded"
+				case errors.Is(err, provider.ErrInvalidKey):
+					errorCode = "invalid_key"
+				case errors.Is(err, provider.ErrTimeout):
+					errorCode = "provider_timeout"
+				}
+				log.Error().Str("request_id", middleware.GetReqID(r.Context())).Err(err).Str("error_code", errorCode).Msg("gateway.stream.error")
+				fmt.Fprintf(w, "event: error\ndata: {\"error\":%q}\n\n", errorCode)
 				flusher.Flush()
 			}
 			return
@@ -181,13 +301,17 @@ func (s *Server) handleStreaming(w http.ResponseWriter, r *http.Request, req *pr
 			}
 			jsonData, err := json.Marshal(resp)
 			if err != nil {
-				log.Error().Err(err).Msg("marshal stream resp failed")
+				log.Error().Err(err).Msg("gateway.stream.marshal_failed")
 				continue
 			}
 			fmt.Fprintf(w, "data: %s\n\n", jsonData)
 			flusher.Flush()
 		}
 	}
+}
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.router.ServeHTTP(w, r)
 }
 
 func (s *Server) Start() error {
